@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Ayarlar</title>
+  <style>
+    body { background-color: #1e1e1e; color: white; font-family: sans-serif; padding: 20px; }
+    button { margin-top: 10px; padding: 8px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h2>Ayarlar</h2>
+  <button onclick="setTheme('TokyoNight')">TokyoNight</button>
+  <button onclick="setTheme('Catppuccin')">Catppuccin</button>
+  <button onclick="setTheme('Gruvbox')">Gruvbox</button>
+  <button onclick="setTheme('OneDark')">OneDark</button>
+
+  <script>
+    const setTheme = (theme) => {
+      window.api.setTheme(theme);
+    };
+  </script>
+</body>
+</html>

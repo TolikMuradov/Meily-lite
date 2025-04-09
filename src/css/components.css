@@ -1,0 +1,149 @@
+/* components.css */
+
+.btn {
+    border: none;
+    background-color: transparent;
+    color: var(--text-muted);
+    padding: 6px 12px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+  }
+  
+  .btn:hover {
+    background-color: var(--bg-hover);
+    color: var(--text);
+  }
+  
+  .input, .textarea {
+    background-color: var(--bg-panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    width: 100%;
+    outline: none;
+  }
+  
+  .input:focus, .textarea:focus {
+    border-color: var(--primary);
+  }
+ 
+  
+  .user-info {
+    padding: 10px;
+    font-size: 12px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+  }
+  .note-item {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  
+  .note-item:hover,
+  .note-item.active {
+    background-color: var(--bg-hover);
+  }
+  
+  .note-item h5 {
+    color: var(--text);
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+  
+  .note-item small {
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+  .input, .textarea {
+    width: 100%;
+    background-color: var(--bg-panel);
+    color: var(--text);
+    border: none;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    resize: none;
+  }
+  
+  .textarea {
+    height: calc(100% - 60px);
+  }
+  .btn.small {
+    font-size: 12px;
+    padding: 2px 6px;
+    margin-left: 5px;
+  }
+  
+  .notes-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  
+  .left-icons,
+  .right-icons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .title {
+    flex: 1;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 500;
+  }
+  
+  .icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: color 0.2s ease;
+  }
+  
+  .icon-btn:hover {
+    color: var(--text);
+  }
+  
+  .notes-search {
+    position: relative;
+    padding: 10px 12px;
+  }
+  
+  .notes-search input {
+    width: 100%;
+    padding: 6px 28px;
+    background-color: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+  }
+  
+  .search-icon {
+    position: absolute;
+    top: 16px;
+    left: 20px;
+    color: var(--text-muted);
+  }
+  
+  .link-btn {
+    background: none;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    padding: 0;
+    margin-left: 4px;
+    font-size: 14px;
+  }
+  .link-btn:hover {
+    text-decoration: underline;
+  }

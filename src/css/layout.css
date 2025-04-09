@@ -1,0 +1,27 @@
+.app-container {
+    display: grid;
+    grid-template-columns: 220px 280px 1fr 1fr; /* 4 sütunlu layout */
+    height: 100vh;
+    background-color: var(--bg-dark);
+  }
+  
+  .sidebar, .notes-list {
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+  }
+  
+  .editor, .preview {
+    padding: 20px;
+    overflow-y: auto;
+  }
+  
+  .sidebar {
+    display: flex;
+    flex-direction: column;;
+  }
+  
+  .notes-list {
+    padding: 0;
+    min-width: 250px;
+  }
+  

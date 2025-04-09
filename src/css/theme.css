@@ -1,0 +1,46 @@
+[data-theme="TokyoNight"] {
+    --bg-dark: #161821;
+    --bg-panel: #1e2132;
+    --bg-hover: #282b3f;
+    --text: #c0caf5;
+    --text-muted: #7e88a2;
+    --primary: #7aa2f7;
+    --success: #9ece6a;
+    --danger: #f7768e;
+    --border: #2d3041;
+  }
+  [data-theme="Catppuccin"] {
+    --bg-dark: #1e1e2e;
+    --bg-panel: #181825;
+    --bg-hover: #313244;
+    --text: #cdd6f4;
+    --text-muted: #9399b2;
+    --primary: #89b4fa;
+    --success: #a6e3a1;
+    --danger: #f38ba8;
+    --border: #45475a;
+  }
+  
+  [data-theme="Gruvbox"] {
+    --bg-dark: #282828;
+    --bg-panel: #32302f;
+    --bg-hover: #3c3836;
+    --text: #ebdbb2;
+    --text-muted: #a89984;
+    --primary: #83a598;
+    --success: #b8bb26;
+    --danger: #fb4934;
+    --border: #504945;
+  }
+  
+  [data-theme="OneDark"] {
+    --bg-dark: #282c34;
+    --bg-panel: #21252b;
+    --bg-hover: #2c313a;
+    --text: #abb2bf;
+    --text-muted: #5c6370;
+    --primary: #61afef;
+    --success: #98c379;
+    --danger: #e06c75;
+    --border: #3e4451;
+  }

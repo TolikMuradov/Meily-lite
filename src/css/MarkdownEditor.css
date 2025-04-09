@@ -1,0 +1,73 @@
+.editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 15px;
+  }
+  
+  .title-input {
+    font-size: 1.2rem;
+    width: 100%; 
+    padding: 8px;
+    margin-bottom: 10px;
+    background-color: transparent;
+    color: var(--text);
+    border: none;
+    outline: none;
+  }
+  
+  .markdown-textarea {
+    flex-grow: 1;
+    padding: 8px;
+    background-color: transparent;
+    color: var(--text);
+    border: none;
+    outline: none;
+    resize: none;
+  }
+  
+  .toolbar-and-buttons {
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  
+  .toolbar {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .toolbar button {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 8px;
+  }
+  
+  .toolbar button:hover {
+    background-color: var(--bg-hover);
+    border-radius: 4px;
+  }
+  
+  .editor-buttons {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .editor-buttons .btn {
+    cursor: pointer;
+    padding: 4px 8px;
+    color: var(--text-muted);
+    background-color: transparent;
+    border: none;
+  }
+  
+  .editor-buttons .btn:hover {
+    color: var(--text);
+  }
+  

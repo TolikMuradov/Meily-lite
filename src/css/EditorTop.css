@@ -1,0 +1,55 @@
+.editor-top-container {
+    width: 100%;
+    padding: 15px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .title-input {
+    width: 100%;
+    background-color: transparent;
+    border: none;
+    color: var(--text);
+    outline: none;
+    padding: 8px;
+    font-size: 1.2rem;
+  }
+  
+  .toolbar-and-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+  }
+  
+  .toolbar {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .toolbar button {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+  
+  .toolbar button:hover {
+    background-color: var(--bg-hover);
+    border-radius: 4px;
+  }
+  
+  .editor-buttons .btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+  
+  .editor-buttons .btn:hover {
+    color: var(--text);
+  }
+  

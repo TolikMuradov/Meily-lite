@@ -1,0 +1,138 @@
+/* src/index.css */
+
+@import './css/base.css';
+@import './css/layout.css';
+@import './css/components.css';
+@import './css/theme.css';
+@import './css/Modal.css';
+@import './css/EditorTop.css';
+@import './css/sidebar.css';
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: transparent;
+  color: #fff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.app-container {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  backdrop-filter: blur(10px);
+}
+
+.sidebar, .notes-list {
+  overflow-y: auto;
+  background: transparent;
+  backdrop-filter: blur(10px);
+}
+
+.editor-panel-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.editor-preview-container {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.editor-preview-container > * {
+  flex: 1;
+  padding: 10px;
+  overflow: auto;
+}
+
+/* Editor Top için daha net bir görünüm: */
+.editor-top-container {
+  border-bottom: 1px solid #333;
+}
+
+.title-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ccc;
+  font-size: 1.4rem;
+  padding: 8px;
+  width: 100%;
+}
+
+.toolbar-and-buttons {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  align-items: center;
+}
+
+.toolbar button {
+  background-color: transparent;
+  color: #ccc;
+  border: none;
+  cursor: pointer;
+}
+
+.toolbar button:hover {
+  color: #fff;
+}
+
+.editor-buttons .btn {
+  background-color: transparent;
+  color: #ccc;
+  border: none;
+  cursor: pointer;
+}
+
+.editor-buttons .btn:hover {
+  color: #fff;
+}
+
+/* Markdown textarea görünümü düzeltelim: */
+.markdown-textarea {
+  background-color: transparent;
+  color: #ccc;
+  border: none;
+  outline: none;
+  width: 100%;
+  height: 100%;
+  resize: none;
+}
+
+.editor-placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.context-menu {
+  position: absolute;
+  z-index: 9999;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  width: 140px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.context-menu-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.context-menu-item:hover {
+  background-color: var(--bg-hover);
+}
