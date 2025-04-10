@@ -57,7 +57,6 @@ ipcMain.on('open-settings-window', () => {
 // IPC: Tema değiştirme
 ipcMain.on('set-theme', (event, theme) => {
   mainWindow.webContents.send('theme-changed', theme);
-  if (settingsWindow) settingsWindow.close();
 });
 
 // ✅ IPC: Resim seçme ve public klasörüne kopyalama
@@ -107,6 +106,11 @@ ipcMain.on('window:maximize', () => {
   mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize();
 });
 ipcMain.on('window:close', () => mainWindow.close());
+
+ipcMain.on('set-transparent', (event, value) => {
+  mainWindow.webContents.send('transparent-mode', value);
+});
+
 
 app.whenReady().then(() => {
   createMainWindow();

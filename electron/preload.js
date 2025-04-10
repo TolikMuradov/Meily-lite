@@ -11,4 +11,8 @@ contextBridge.exposeInMainWorld('api', {
   minimize: () => ipcRenderer.send('window:minimize'),
   maximize: () => ipcRenderer.send('window:maximize'),
   close: () => ipcRenderer.send('window:close'),
+  
+  onTransparentToggle: (callback) =>
+    ipcRenderer.on('transparent-mode', (_, value) => callback(value)),
+  
 });

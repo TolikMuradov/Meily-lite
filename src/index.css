@@ -14,8 +14,12 @@ html, body, #root {
   padding: 0;
   overflow: hidden;
   background: transparent;
-  color: #fff;
+  color: var(--text);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body.opaque{
+  background-color: var(--bg-dark);
 }
 
 .app-container {
@@ -23,13 +27,12 @@ html, body, #root {
   height: 100%;
   overflow: hidden;
   background: transparent;
-  backdrop-filter: blur(10px);
 }
 
 .sidebar, .notes-list {
   overflow-y: auto;
   background: transparent;
-  backdrop-filter: blur(10px);
+  
 }
 
 .editor-panel-container {

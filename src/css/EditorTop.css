@@ -53,3 +53,99 @@
     color: var(--text);
   }
   
+  .note-meta-controls {
+    display: flex;
+    align-items: center;
+  }
+
+  .category-select{
+    display: none;
+  }
+  .category-btn{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .category-btn:hover{
+    background-color: var(--bg-hover);
+    border-radius: 4px;
+  }
+
+  .category-btn:hover .category-icon{
+    color: var(--text);
+  }
+
+  .category-btn:hover .category-name{
+    color: var(--text);
+  }
+
+  .category-icon{
+    color: var(--text-muted);
+  }
+
+  .category-name{
+    color: var(--text-muted);
+  }
+  .status-dropdown {
+    position: relative;
+    display: inline-block;
+    margin-left: 10px;
+  }
+  
+  .status-trigger {
+    background: transparent;
+    color: var(--text);
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+  
+  .status-menu {
+    position: absolute;
+    top: 110%;
+    left: 0;
+    background: var(--bg-dark, #222);
+    border-radius: 6px;
+    padding: 6px 0;
+    min-width: 160px;
+    z-index: 1000;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  }
+  
+  .status-item {
+    padding: 6px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: white;
+  }
+  
+  .status-item:hover {
+    background: var(--bg-hover, #E45826);
+  }
+  
+  .status-item.selected {
+    font-weight: bold;
+    background-color: var(--bg-hover, #E45826);
+  }
+  
+  .status-icon {
+    font-size: 16px;
+  }
+  
+  .status-icon.play { color: var(--primary); }
+  .status-icon.pause { color: var(--text); }
+  .status-icon.done { color: var(--success); }
+  .status-icon.dropped { color: var(--danger) ; }
+  
+  .arrow {
+    margin-left: auto;
+    font-size: 12px;
+  }
+  

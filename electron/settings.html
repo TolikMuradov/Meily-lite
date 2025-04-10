@@ -15,10 +15,26 @@
   <button onclick="setTheme('Gruvbox')">Gruvbox</button>
   <button onclick="setTheme('OneDark')">OneDark</button>
 
+  <label>
+    <input type="checkbox" id="transparentToggle">
+    Arka planı şeffaf yap
+  </label>
+
   <script>
     const setTheme = (theme) => {
       window.api.setTheme(theme);
     };
+  </script>
+  <script>
+    const checkbox = document.getElementById('transparentToggle');
+    const saved = localStorage.getItem('transparentMode') === 'true';
+    checkbox.checked = saved;
+  
+    checkbox.addEventListener('change', (e) => {
+      const isChecked = e.target.checked;
+      window.api.setTransparentMode(isChecked);
+      localStorage.setItem('transparentMode', isChecked ? 'true' : 'false');
+    });
   </script>
 </body>
 </html>

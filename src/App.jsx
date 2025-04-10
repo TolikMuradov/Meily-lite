@@ -10,7 +10,7 @@ import Modal from './components/Modal';
 import { 
   fetchCategories, fetchNotesByCategory, createNote, 
   updateNote, deleteNote, createCategory, 
-  updateCategory, deleteCategory 
+  updateCategory, deleteCategory, 
 } from './api';
 
 export default function App() {
@@ -37,6 +37,12 @@ export default function App() {
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
   const [sidebarWidth, setSidebarWidth] = useState(200);
   const defaultCategory = categories.find(c => c.is_default);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
+  const [noteStatus, setNoteStatus] = useState('active');
+  const [noteTags, setNoteTags] = useState([]);
+
+  const allTags = [...new Set(notes.flatMap(n => n.tags || []))];
+
 
 
   const filteredNotes = notes
@@ -67,6 +73,28 @@ export default function App() {
     }
     return "All Notes";
   };
+
+  useEffect(() => {
+    const transparent = localStorage.getItem('transparentMode') === 'true';
+    document.body.classList.toggle('opaque', !transparent);
+  
+    if (window.api?.onTransparentToggle) {
+      window.api.onTransparentToggle((value) => {
+        document.body.classList.toggle('opaque', !value);
+        localStorage.setItem('transparentMode', value ? 'true' : 'false');
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    window.api.onTransparentToggle((value) => {
+      if (value) {
+        document.body.classList.remove('opaque');
+      } else {
+        document.body.classList.add('opaque');
+      }
+    });
+  }, []);
   
  // Uygulama açılışında tema localStorage'dan alınarak ayarlansın
 useEffect(() => {
@@ -102,14 +130,21 @@ useEffect(() => {
     if (selectedNote) {
       setTitle(selectedNote.title);
       setContent(selectedNote.content);
+      setNoteStatus(selectedNote.status); // ✅ yeni
     } else {
       setTitle('');
       setContent('');
+      setNoteStatus('active');
+      setNoteTags(selectedNote?.tags || []);
     }
   }, [selectedNote]);
 
   const autosaveRef = useRef(
     debounce((note) => {
+      if (!note.category) {
+        console.warn("⛔ Kategori atanmadı, autosave iptal.");
+        return;
+      }
       updateNote(note.id, note)
         .then((saved) => {
           console.log("📝 Otomatik kaydedildi:", saved.title);
@@ -118,7 +153,7 @@ useEffect(() => {
         .catch((err) => {
           console.error("Autosave hatası:", err);
         });
-    }, 2000)
+    }, 1000)
   );
   
   const handleChangeTitle = (val) => {
@@ -128,6 +163,8 @@ useEffect(() => {
         ...selectedNote,
         title: val,
         content,
+        status: noteStatus,
+        tags: noteTags,
       });
     }
   };
@@ -139,6 +176,7 @@ useEffect(() => {
         ...selectedNote,
         title,
         content: val,
+        status: noteStatus, // ✅
       });
     }
   };
@@ -167,7 +205,8 @@ useEffect(() => {
       category: categoryId,
       is_pinned: false,
       is_deleted: false,
-      status: "active"
+      status: "active",
+      tags: [],
     };
     console.log("Yeni not gönderiliyor:");
     console.log(JSON.stringify(newNote, null, 2));
@@ -290,7 +329,7 @@ useEffect(() => {
     category: {},
   };
   
-  // Bu kontrol ile siyah ekranı engellemiş olacağız:
+ 
   if (Array.isArray(categories) && categories.length > 0) {
     categories.forEach(cat => {
       noteStats.category[cat.id] = notes.filter(n => n.category === cat.id && !n.is_deleted).length;
@@ -335,14 +374,35 @@ useEffect(() => {
       />
  {selectedNote ? (
       <div className="editor-panel-container">
-      <EditorTop
-        title={title}
-        setTitle={handleChangeTitle} // direkt setTitle değil
-        onInsertMarkdown={handleInsertMarkdown}
-        onSave={handleUpdateNote}
-        onDelete={handleDeleteNote}
-        onExport={handleExportNote}
-      />
+            <EditorTop
+              title={title}
+              setTitle={handleChangeTitle}
+              onInsertMarkdown={handleInsertMarkdown}
+              onSave={handleUpdateNote}
+              onDelete={handleDeleteNote}
+              onExport={handleExportNote}
+              categories={categories}
+              selectedCategoryId={selectedNote?.category || selectedCategoryId}
+              setSelectedCategoryId={(id) => {
+                setSelectedCategoryId(id);
+                if (selectedNote) {
+                  const updated = { ...selectedNote, category: parseInt(id) };
+                  setSelectedNote(updated);
+                  autosaveRef.current(updated); // hemen kaydet
+                }
+              }}
+              noteStatus={noteStatus} // ✅
+              setNoteStatus={(status) => {
+                setNoteStatus(status);
+                if (selectedNote) {
+                  const updated = { ...selectedNote, status };
+                  setSelectedNote(updated);
+                  autosaveRef.current(updated);
+                }
+              }}
+              noteTags={noteTags}             
+              setNoteTags={setNoteTags}
+            />
        
           <div className="editor-preview-container">
           <MarkdownEditor
