@@ -147,3 +147,39 @@
   .link-btn:hover {
     text-decoration: underline;
   }
+
+  .trash-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  
+  /* Geri Al Butonu (Yeşil) */
+  .restore-btn {
+    padding: 4px 10px;
+    color: var(--success);
+    font-size: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .restore-btn:hover {
+    background-color: var(--success);
+    color: var(--bg-dark); /* Tokyo green hover */
+  }
+  
+  /* Kalıcı Sil Butonu (Kırmızı) */
+  .delete-btn {
+    padding: 4px 10px;
+    color: var(--danger);
+    font-size: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .delete-btn:hover {
+    background-color: var(--danger);
+    color: var(--bg-dark); /* Tokyo red hover */
+  }
+  
