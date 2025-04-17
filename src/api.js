@@ -59,3 +59,30 @@ export const createCategory = (category) =>
       method: 'DELETE',
     });
 
+    export const fetchTags = () =>
+      fetch(`${API_URL}/tags/`).then(res => res.json());
+
+    export const createTag = (tag) =>
+      fetch(`${API_URL}/tags/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(tag)
+      }).then(res => res.json());
+    
+    
+
+      export const updateTag = (id, tag) =>
+        fetch(`${API_URL}/tags/${id}/`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(tag)
+        }).then(res => res.json());
+      
+        export const deleteTag = (id) =>
+          fetch(`${API_URL}/tags/${id}/`, {
+            method: 'DELETE',
+          }).then(res => {
+            if (!res.ok) throw new Error('Tag silinemedi');
+            return true;
+          });
+        
