@@ -107,13 +107,13 @@
     color: var(--primary);
   }
 .pause{
-    color: var(--text);
+    color: var(--orange);
   }
 .check{
     color: var(--success);
   }
  .x{
-    color: var(--danger);
+    color: var(--red);
   }
 
   .sidebar-section-header {

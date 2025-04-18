@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import '../css/TagsInput.css';
-import { updateTag } from '../api'; // ✅ api'den çağır
+import { updateTag } from '../api'; 
 
 const COLOR_NAMES = ['orange', 'teal', 'violet', 'yellow', 'blue', 'green', 'pink', 'gray'];
 

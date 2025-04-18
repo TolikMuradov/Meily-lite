@@ -324,14 +324,18 @@ export default function App() {
     });
   };
 
-  const handleUpdateCategory = category => {
-    openModal('Kategoriyi Düzenle', category.name, newName => {
-      updateCategory(category.id, { ...category, name: newName }).then(updatedCategory => {
+  const handleUpdateCategory = (category, newName) => {
+    updateCategory(category.id, { ...category, name: newName })
+      .then(updatedCategory => {
         setCategories(categories.map(cat => cat.id === updatedCategory.id ? updatedCategory : cat));
         setSelectedCategory(updatedCategory);
+      })
+      .catch(err => {
+        console.error("Kategori güncellenemedi:", err);
+        alert("Kategori güncellenemedi!");
       });
-    });
   };
+  
 
   const handleDeleteCategory = (category) => {
     if (!confirm(`"${category.name}" silinsin mi?`)) return;

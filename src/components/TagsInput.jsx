@@ -4,6 +4,7 @@ import TagContextMenu from './TagContextMenu';
 import TagSettingsModal from './TagSettingsModal';
 import '../css/TagsInput.css';
 import { fetchTags, createTag, updateTag, deleteTag } from '../api';
+import { hexToRgba } from './utils';
 
 export default function TagsInput({ tags, setTags }) {
   const [input, setInput] = useState('');
@@ -85,14 +86,18 @@ export default function TagsInput({ tags, setTags }) {
         <div
           key={tag.id}
           className={`tag-item ${highlightedIndex === i ? 'highlighted' : ''}`}
-          style={{ backgroundColor: tag.color }}
+          style={{
+            backgroundColor: hexToRgba(tag.color, 0.3),
+            color: tag.color,
+            borderColor: tag.color
+          }}
           onContextMenu={(e) => {
             e.preventDefault();
             setContextMenuInfo({ x: e.pageX, y: e.pageY, tag });
           }}
+          
         >
           {tag.name}
-          <FiX onClick={() => removeTag(tag.id)} className="remove-tag" />
         </div>
       ))}
 
