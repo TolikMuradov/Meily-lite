@@ -1,73 +1,90 @@
-.editor-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    padding: 15px;
+.markdown-editor,.markdown-preview {
+  height: 100%;
+  width: 100%;
+  background-color: transparent !important;
+}
+
+.cm-editor {
+  background: transparent !important;
+  color: inherit !important;
+}
+
+.cm-content {
+  background: transparent !important;
+}
+.markdown-preview {
+  padding: 16px;
+  overflow: auto;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+  background-color: transparent !important;
+}
+
+.markdown-preview pre {
+  background: transparent !important;
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+.markdown-preview .mermaid {
+  background: transparent !important;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 8px;
+}
+
+/* Slash command popup */
+.slash-command-popup {
+  position: absolute;
+  bottom: 60px;
+  left: 20px;
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 0;
+  width: 220px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  font-size: 14px;
+  animation: popupFade 0.2s ease-in-out;
+}
+
+/* Command item */
+.slash-command-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s, color 0.2s;
+}
+
+/* Hover + selected */
+.slash-command-item:hover,
+.slash-command-item.selected {
+  background-color: var(--bg-hover);
+  color: var(--text);
+  font-weight: 500;
+  border-left: 3px solid var(--primary);
+}
+
+/* Fade animation */
+@keyframes popupFade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
-  
-  .title-input {
-    font-size: 1.2rem;
-    width: 100%; 
-    padding: 8px;
-    margin-bottom: 10px;
-    background-color: transparent;
-    color: var(--text);
-    border: none;
-    outline: none;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  .markdown-textarea {
-    flex-grow: 1;
-    padding: 8px;
-    background-color: transparent;
-    color: var(--text);
-    border: none;
-    outline: none;
-    resize: none;
-  }
-  
-  .toolbar-and-buttons {
-    display: flex;
-    justify-content: space-between; 
-    align-items: center;
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid var(--border);
-  }
-  
-  .toolbar {
-    display: flex;
-    gap: 8px;
-  }
-  
-  .toolbar button {
-    background: transparent;
-    border: none;
-    color: var(--text);
-    cursor: pointer;
-    font-size: 14px;
-    padding: 4px 8px;
-  }
-  
-  .toolbar button:hover {
-    background-color: var(--bg-hover);
-    border-radius: 4px;
-  }
-  
-  .editor-buttons {
-    display: flex;
-    gap: 10px;
-  }
-  
-  .editor-buttons .btn {
-    cursor: pointer;
-    padding: 4px 8px;
-    color: var(--text-muted);
-    background-color: transparent;
-    border: none;
-  }
-  
-  .editor-buttons .btn:hover {
-    color: var(--text);
-  }
-  
+}
+
+
+
+
+
+

@@ -265,3 +265,12 @@
 .sort-dropdown div:hover {
   background-color: var(--bg-hover);
 }
+
+.note-timestamps{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}

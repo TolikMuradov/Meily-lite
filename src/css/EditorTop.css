@@ -25,21 +25,36 @@
   
   .toolbar {
     display: flex;
-    gap: 8px;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px;
+    align-items: center;
+  }
+  .toolbar .header{
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    border: 1px solid var(--text-muted);
+    border-radius: 20px;
+    padding: 4px;
   }
   
   .toolbar button {
-    background: transparent;
-    border: none;
+    background-color: transparent;
     color: var(--text);
+    border: none;
+    font-size: 12px;
+    border-radius: 4px;
     cursor: pointer;
+    transition: all 0.2s ease;
     padding: 4px 8px;
   }
   
   .toolbar button:hover {
-    background-color: var(--bg-hover);
-    border-radius: 4px;
+    background-color: var(--primary);
+    color: #fff;
   }
+  
   
   .editor-buttons .btn {
     background: transparent;

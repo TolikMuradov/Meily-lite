@@ -7,6 +7,11 @@ import {
 import { BsSortDown } from "react-icons/bs";
 import { hexToRgba } from './utils';
 
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+dayjs.extend(relativeTime);
+
+
 const statusIcons = {
   active: <FiPlay title="Active" className="status-icon play" />,
   on_hold: <FiPause title="On Hold" className="status-icon pause" />,
@@ -122,6 +127,11 @@ export default function NotesList({
                   #{tag.name}
                 </span>
               ))}
+              <div className="note-timestamps">
+                <small>Created {dayjs(note.created_at).fromNow()}</small>
+                <small>Updated {dayjs(note.updated_at).fromNow()}</small>
+              </div>
+
             </div>
 
             {isTrashMode && (

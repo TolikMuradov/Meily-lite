@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -109,6 +109,16 @@ ipcMain.on('window:close', () => mainWindow.close());
 
 ipcMain.on('set-transparent', (event, value) => {
   mainWindow.webContents.send('transparent-mode', value);
+});
+
+ipcMain.on('open-link', (event, url) => {
+  if (url && url.startsWith('http')) {
+    shell.openExternal(url).catch(err => {
+      console.error('🔴 shell.openExternal error:', err);
+    });
+  } else {
+    console.warn('Geçersiz link:', url);
+  }
 });
 
 

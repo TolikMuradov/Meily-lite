@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { debounce } from 'lodash';
 import './index.css';
+import './css/Modal.css';
 import Sidebar from './components/Sidebar';
 import NotesList from './components/NotesList';
 import MarkdownEditor from './components/MarkdownEditor';
@@ -14,6 +15,9 @@ import {
 } from './api';
 
 export default function App() {
+  
+  const editorRef = useRef(null);
+
   const [theme, setTheme] = useState(() => localStorage.getItem('selectedTheme') || 'TokyoNight');
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -36,7 +40,10 @@ export default function App() {
   const [sidebarWidth, setSidebarWidth] = useState(200);
   const [globalTags, setGlobalTags] = useState([]);
   const [sortOption, setSortOption] = useState('updated-desc');
-
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+  const [linkText, setLinkText] = useState('');
+  const [linkHref, setLinkHref] = useState('');
+  
   const defaultCategory = categories.find(c => c.is_default);
 
   const uniqueTags = [...new Set(notes.flatMap(n => (n.tags || []).map(t => t.name)))];
@@ -83,6 +90,7 @@ export default function App() {
         return new Date(b.updated_at) - new Date(a.updated_at);
     }
   });
+
 
 
     
@@ -337,12 +345,6 @@ export default function App() {
     });
   };
 
-
-
-
-
-
-
   const openModal = (title, defaultValue, onSubmit) => {
     setModalTitle(title);
     setModalDefaultValue(defaultValue);
@@ -371,7 +373,6 @@ export default function App() {
       });
   };
 
-
   const handleDeleteCategory = (category) => {
     if (!confirm(`"${category.name}" silinsin mi?`)) return;
     deleteCategory(category.id).then(() => {
@@ -388,6 +389,48 @@ export default function App() {
     const exported = await window.api.exportNote({ title, content });
     if (exported) alert('📄 Not başarıyla dışa aktarıldı!');
   };
+
+
+
+
+  const insertMarkdownAtCursor = (snippetStart, snippetEnd = '') => {
+    const view = editorRef.current;
+    if (!view) return;
+  
+    const { state, dispatch } = view;
+    const selection = state.selection.main;
+    const selectedText = state.sliceDoc(selection.from, selection.to);
+  
+    const newText = `${snippetStart}${selectedText}${snippetEnd}`;
+    dispatch({
+      changes: {
+        from: selection.from,
+        to: selection.to,
+        insert: newText
+      },
+      selection: {
+        anchor: selection.from + snippetStart.length,
+        head: selection.from + newText.length - snippetEnd.length
+      },
+      scrollIntoView: true
+    });
+  
+    view.focus();
+  };
+  
+  const handleLinkClick = () => {
+    const view = editorRef.current;
+    if (!view) return;
+  
+    const { state } = view;
+    const selection = state.selection.main;
+    const selectedText = state.sliceDoc(selection.from, selection.to);
+  
+    setLinkText(selectedText);
+    setLinkHref('');
+    setIsLinkModalOpen(true);
+  };
+  
 
   return (
     <div className="app-container">
@@ -436,10 +479,11 @@ export default function App() {
           <EditorTop
             title={title}
             setTitle={handleChangeTitle}
-            onInsertMarkdown={handleInsertMarkdown}
+            onInsertMarkdown={insertMarkdownAtCursor}
             onSave={handleUpdateNote}
             onDelete={handleDeleteNote}
             onExport={handleExportNote}
+            onLinkClick={handleLinkClick}
             categories={categories}
             selectedCategoryId={selectedNote?.category || selectedCategoryId}
             setSelectedCategoryId={(id) => {
@@ -480,10 +524,15 @@ export default function App() {
   }}
           />
 
-          <div className="editor-preview-container">
-          <MarkdownEditor content={content} setContent={setContent} />
-            <Preview note={{ title, content }} />
-          </div>
+              <div className="editor-preview-container">
+              <MarkdownEditor
+                content={content}
+                setContent={setContent}
+                editorRef={editorRef}
+              />
+                <Preview content={content} />
+              </div>
+
         </div>
       ) : (
         <div className="editor-placeholder">
@@ -499,6 +548,73 @@ export default function App() {
         onSubmit={onModalSubmit}
         onClose={() => setIsModalOpen(false)}
       />
+
+{isLinkModalOpen && (
+  <div className="modal-overlay">
+    <div className="modal-content" onClick={e => e.stopPropagation()}>
+      <h3>Link Ekle</h3>
+      <form onSubmit={(e) => {
+          e.preventDefault(); // sayfa yenilenmesini engelle
+          const view = editorRef.current;
+          if (!view) return;
+
+          const { state, dispatch } = view;
+          const selection = state.selection.main;
+
+          const markdown = `[${linkText}](${linkHref})`;
+
+          dispatch({
+            changes: { from: selection.from, to: selection.to, insert: markdown },
+            selection: {
+              anchor: selection.from + markdown.length,
+            },
+            scrollIntoView: true,
+          });
+
+          setIsLinkModalOpen(false);
+        }}>
+      <label>Metin</label>
+      <input
+        type="text"
+        value={linkText}
+        onChange={(e) => setLinkText(e.target.value)}
+      />
+
+      <label>URL</label>
+      <input
+        type="text"
+        value={linkHref}
+        onChange={(e) => setLinkHref(e.target.value)}
+        placeholder="https://..."
+      />
+
+      <div className="modal-buttons">
+        <button className="btn" onClick={() => {
+          const view = editorRef.current;
+          if (!view) return;
+
+          const { state, dispatch } = view;
+          const selection = state.selection.main;
+
+          const markdown = `[${linkText}](${linkHref})`;
+
+          dispatch({
+            changes: { from: selection.from, to: selection.to, insert: markdown },
+            selection: {
+              anchor: selection.from + markdown.length,
+            },
+            scrollIntoView: true,
+          });
+
+          setIsLinkModalOpen(false);
+        }}>Ekle</button>
+        <button className="btn" onClick={() => setIsLinkModalOpen(false)}>İptal</button>
+      </div>
+      </form>
+    </div>
+  </div>
+)}
+
 
       {showContextMenu && contextCategory && (
         <div
@@ -537,6 +653,7 @@ export default function App() {
           )}
         </div>
       )}
+      
     </div>
   );
 }
