@@ -85,11 +85,12 @@ export default function TagsInput({ tags, setTags }) {
       {tags.map((tag, i) => (
         <div
           key={tag.id}
-          className={`tag-item ${highlightedIndex === i ? 'highlighted' : ''}`}
+          className={`tag-item ${highlightedIndex === i ? 'highlighted' : ''} note-tag glow`}
           style={{
             backgroundColor: hexToRgba(tag.color, 0.3),
             color: tag.color,
-            borderColor: tag.color
+            borderColor: tag.color,
+            '--tag-color-shadow': hexToRgba(tag.color, 0.6)
           }}
           onContextMenu={(e) => {
             e.preventDefault();

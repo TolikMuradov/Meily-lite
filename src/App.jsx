@@ -35,6 +35,7 @@ export default function App() {
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
   const [sidebarWidth, setSidebarWidth] = useState(200);
   const [globalTags, setGlobalTags] = useState([]);
+  const [sortOption, setSortOption] = useState('updated-desc');
 
   const defaultCategory = categories.find(c => c.is_default);
 
@@ -50,21 +51,41 @@ export default function App() {
   });
 
   const filteredNotes = notes
-    .filter(note => {
-      if (noteFilter.type === 'pinned') return note.is_pinned && !note.is_deleted;
-      if (noteFilter.type === 'trash') return note.is_deleted;
-      if (noteFilter.type === 'category') return note.category === noteFilter.id && !note.is_deleted;
-      if (noteFilter.type === 'status') return note.status === noteFilter.status && !note.is_deleted;
-      if (noteFilter.type === 'tag') return (note.tags || []).some(t => t.name === noteFilter.tag) && !note.is_deleted;
-      return !note.is_deleted;
-    })
-    .filter(note => {
-      if (!searchTerm) return true;
-      return (
-        note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        note.content.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    });
+  .filter(note => {
+    if (noteFilter.type === 'pinned') return note.is_pinned && !note.is_deleted;
+    if (noteFilter.type === 'trash') return note.is_deleted;
+    if (noteFilter.type === 'category') return note.category === noteFilter.id && !note.is_deleted;
+    if (noteFilter.type === 'status') return note.status === noteFilter.status && !note.is_deleted;
+    if (noteFilter.type === 'tag') return (note.tags || []).some(t => t.name === noteFilter.tag) && !note.is_deleted;
+    return !note.is_deleted;
+  })
+  .filter(note => {
+    if (!searchTerm) return true;
+    return (
+      note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      note.content.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  })
+  .sort((a, b) => {
+    switch (sortOption) {
+      case 'title-asc':
+        return (a.title ?? '').localeCompare(b.title ?? '');
+      case 'title-desc':
+        return (b.title ?? '').localeCompare(a.title ?? '');
+      case 'created-asc':
+        return new Date(a.created_at) - new Date(b.created_at);
+      case 'created-desc':
+        return new Date(b.created_at) - new Date(a.created_at);
+      case 'updated-asc':
+        return new Date(a.updated_at) - new Date(b.updated_at);
+      case 'updated-desc':
+      default:
+        return new Date(b.updated_at) - new Date(a.updated_at);
+    }
+  });
+
+
+    
 
   const getFilterTitle = () => {
     if (noteFilter.type === 'pinned') return 'Pinned Notes';
@@ -133,13 +154,6 @@ export default function App() {
       });
   };
   
-  
-  
-  
-  
-  
-  
-
   const permanentlyDelete = (id) => {
     if (!confirm("Bu not kalıcı olarak silinecek. Emin misiniz?")) return;
     permanentlyDeleteNote(id).then(() => {
@@ -178,7 +192,14 @@ export default function App() {
       .then(([cats, allNotes]) => {
         setCategories(cats);
         setNotes(allNotes);
-        setSelectedCategory(cats[0] || null);
+
+        const def = cats.find(c => c.is_default);
+        if (def) {
+          setSelectedCategory(def);
+          setNoteFilter({ type: 'category', id: def.id });
+        } else {
+          setSelectedCategory(cats[0] || null);
+        }
       })
       .catch(err => console.error("Veriler alınamadı:", err));
   }, []);
@@ -233,12 +254,22 @@ export default function App() {
   });
 
   const handleAddNote = () => {
-    let categoryId = noteFilter.type === 'category' ? noteFilter.id : selectedCategory?.id;
+    const defaultCategory = categories.find(c => c.is_default);
+    let categoryId = null;
+
+    if (noteFilter.type === 'category') {
+      categoryId = noteFilter.id;
+    } else if (selectedCategory?.id) {
+      categoryId = selectedCategory.id;
+    }
+
     if (!categoryId) {
-      const fallback = categories.find(c => c.is_default) || categories[0];
-      categoryId = fallback.id;
-      setSelectedCategory(fallback);
-      setNoteFilter({ type: 'category', id: fallback.id });
+      const fallback = defaultCategory || categories[0];
+      if (fallback) {
+        categoryId = fallback.id;
+        setSelectedCategory(fallback);
+        setNoteFilter({ type: 'category', id: fallback.id });
+      }
     }
 
     const newNote = {
@@ -251,17 +282,21 @@ export default function App() {
       tag_ids: []
     };
 
-    createNote(newNote).then(note => {
-      if (note?.id) {
-        setNotes(prev => [note, ...prev]);
-        setSelectedNote(note);
-        setTitle(note.title);
-        setContent(note.content);
-      } else {
-        alert('Not oluşturulamadı.');
-      }
-    }).catch(err => console.error('Not oluşturulamadı:', err));
+    createNote(newNote)
+      .then(note => {
+        if (note?.id) {
+          setNotes(prev => [note, ...prev]);
+          setSelectedNote(note);
+          setTitle(note.title);
+          setContent(note.content);
+        } else {
+          alert('Not oluşturulamadı.');
+        }
+      })
+      .catch(err => console.error('Not oluşturulamadı:', err));
   };
+  
+  
 
   const handleUpdateNote = () => {
     if (!selectedNote?.id) return alert('Güncellemek için not seçmelisin!');
@@ -301,12 +336,12 @@ export default function App() {
       setSelectedNote(null);
     });
   };
-  
-  
-  
-  
-  
-  
+
+
+
+
+
+
 
   const openModal = (title, defaultValue, onSubmit) => {
     setModalTitle(title);
@@ -335,7 +370,7 @@ export default function App() {
         alert("Kategori güncellenemedi!");
       });
   };
-  
+
 
   const handleDeleteCategory = (category) => {
     if (!confirm(`"${category.name}" silinsin mi?`)) return;
@@ -392,6 +427,8 @@ export default function App() {
         filterTitle={getFilterTitle()}
         restoreNote={restoreNote}
         permanentlyDelete={permanentlyDelete}
+        sortOption={sortOption}
+        setSortOption={setSortOption}
       />
 
       {selectedNote ? (
@@ -424,10 +461,27 @@ export default function App() {
             }}
             noteTags={noteTags}
             setNoteTags={setNoteTags}
+
+            note={selectedNote}
+            onTogglePin={() => {
+              if (!selectedNote) return;
+              const updated = {
+                ...selectedNote,
+                is_pinned: !selectedNote.is_pinned,
+                tag_ids: (selectedNote.tags || []).map(t => t.id),
+              };
+          
+              setSelectedNote(updated);
+              setNotes(prev => prev.map(n => n.id === updated.id ? updated : n));
+          
+              updateNote(updated.id, updated)
+                .catch(err => console.error('📌 Pin güncelleme hatası:', err));
+            
+  }}
           />
 
           <div className="editor-preview-container">
-            <MarkdownEditor content={content} setContent={handleChangeContent} />
+          <MarkdownEditor content={content} setContent={setContent} />
             <Preview note={{ title, content }} />
           </div>
         </div>

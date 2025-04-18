@@ -13,6 +13,7 @@ html, body, #root {
   margin: 0;
   padding: 0;
   overflow: hidden;
+  overflow-x: hidden;
   background: transparent;
   color: var(--text);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -29,11 +30,12 @@ body.opaque{
   background: transparent;
 }
 
-.sidebar, .notes-list {
+.sidebar {
   overflow-y: auto;
   background: transparent;
   
 }
+
 
 .editor-panel-container {
   flex: 1;

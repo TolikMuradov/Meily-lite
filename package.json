@@ -11,6 +11,9 @@
     "start": "concurrently \"npm run dev\" \"npm run electron\""
   },
   "dependencies": {
+    "@codemirror/lang-markdown": "^6.3.2",
+    "@codemirror/theme-one-dark": "^6.1.2",
+    "@uiw/react-codemirror": "^4.23.10",
     "lodash": "^4.17.21",
     "marked": "^15.0.7",
     "react": "^19.0.0",

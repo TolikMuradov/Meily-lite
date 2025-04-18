@@ -1,185 +1,267 @@
-/* components.css */
+/* === Genel Butonlar === */
+.notes-list {
+  flex-shrink: 0;
+  min-width: 200px;
+  max-width: 400px;
+  width: 280px; /* varsayılan genişlik */
+  resize: horizontal;
+  overflow: auto;
+  border-right: 1px solid var(--border);
+}
 
 .btn {
-    border: none;
-    background-color: transparent;
-    color: var(--text-muted);
-    padding: 6px 12px;
-    cursor: pointer;
-    border-radius: 6px;
-    transition: background-color 0.2s;
-  }
-  
-  .btn:hover {
-    background-color: var(--bg-hover);
-    color: var(--text);
-  }
-  
-  .input, .textarea {
-    background-color: var(--bg-panel);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px;
-    width: 100%;
-    outline: none;
-  }
-  
-  .input:focus, .textarea:focus {
-    border-color: var(--primary);
-  }
- 
-  
-  .user-info {
-    padding: 10px;
-    font-size: 12px;
-    color: var(--text-muted);
-    border-top: 1px solid var(--border);
-  }
-  .note-item {
-    padding: 12px;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-  }
-  
-  .note-item:hover,
-  .note-item.active {
-    background-color: var(--bg-hover);
-  }
-  
-  .note-item h5 {
-    color: var(--text);
-    font-size: 14px;
-    margin-bottom: 4px;
-  }
-  
-  .note-item small {
-    color: var(--text-muted);
-    font-size: 12px;
-  }
-  .input, .textarea {
-    width: 100%;
-    background-color: var(--bg-panel);
-    color: var(--text);
-    border: none;
-    padding: 12px;
-    margin-bottom: 10px;
-    border-radius: 4px;
-    resize: none;
-  }
-  
-  .textarea {
-    height: calc(100% - 60px);
-  }
-  .btn.small {
-    font-size: 12px;
-    padding: 2px 6px;
-    margin-left: 5px;
-  }
-  
-  .notes-top-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--border);
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text);
-  }
-  
-  .left-icons,
-  .right-icons {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  
-  .title {
-    flex: 1;
-    text-align: center;
-    font-size: 15px;
-    font-weight: 500;
-  }
-  
-  .icon-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--text-muted);
-    transition: color 0.2s ease;
-  }
-  
-  .icon-btn:hover {
-    color: var(--text);
-  }
-  
-  .notes-search {
-    position: relative;
-    padding: 10px 12px;
-  }
-  
-  .notes-search input {
-    width: 100%;
-    padding: 6px 28px;
-    background-color: var(--bg-panel);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    color: var(--text);
-  }
-  
-  .search-icon {
-    position: absolute;
-    top: 16px;
-    left: 20px;
-    color: var(--text-muted);
-  }
-  
-  .link-btn {
-    background: none;
-    border: none;
-    color: var(--primary);
-    cursor: pointer;
-    padding: 0;
-    margin-left: 4px;
-    font-size: 14px;
-  }
-  .link-btn:hover {
-    text-decoration: underline;
-  }
+  border: none;
+  background-color: transparent;
+  color: var(--text-muted);
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
 
-  .trash-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 8px;
-  }
-  
-  /* Geri Al Butonu (Yeşil) */
-  .restore-btn {
-    padding: 4px 10px;
-    color: var(--success);
-    font-size: 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.2s ease;
-  }
-  .restore-btn:hover {
-    background-color: var(--success);
-    color: var(--bg-dark); /* Tokyo green hover */
-  }
-  
-  /* Kalıcı Sil Butonu (Kırmızı) */
-  .delete-btn {
-    padding: 4px 10px;
-    color: var(--danger);
-    font-size: 10px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.2s ease;
-  }
-  .delete-btn:hover {
-    background-color: var(--danger);
-    color: var(--bg-dark); /* Tokyo red hover */
-  }
-  
+.btn:hover {
+  background-color: var(--bg-hover);
+  color: var(--text);
+}
+
+.btn.small {
+  font-size: 12px;
+  padding: 2px 6px;
+  margin-left: 5px;
+}
+
+/* === Giriş Alanları === */
+.input, .textarea {
+  width: 100%;
+  background-color: var(--bg-panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  resize: none;
+  outline: none;
+}
+
+.input:focus, .textarea:focus {
+  border-color: var(--primary);
+}
+
+/* === Not Listesi === */
+.note-item {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.note-item:hover,
+.note-item.selected {
+  background-color: var(--bg-hover);
+}
+
+.note-header-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.note-title {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  max-width: 100%;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+  line-height: 1.4;
+}
+.note-content{
+  color: var(--text-muted);
+  font-size: 12px;
+  margin: 0;
+  max-width: 100%;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+.pinned-icon {
+  color: var(--orange);
+  font-size: 14px !important;
+  margin-right: 4px;
+}
+
+.status-icon {
+  font-size: 10px;
+  opacity: 0.9;
+}
+
+.status-icon.play { color: var(--success); }
+.status-icon.pause { color: var(--yellow); }
+.status-icon.done { color: var(--blue); }
+.status-icon.dropped { color: var(--danger); }
+
+.note-tag {
+  max-width: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 2px 6px;
+  border-radius: 12px;
+  margin-right: 6px;
+  font-size: 0.7rem;
+  display: inline-block;
+  border: 1px solid currentColor;
+}
+
+/* === Arama / Başlık Paneli === */
+.notes-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.left-icons,
+.right-icons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+}
+
+.icon-btn:hover {
+  color: var(--text);
+}
+
+/* === Arama Inputu === */
+.notes-search {
+  position: relative;
+  padding: 10px 12px;
+}
+
+.notes-search input {
+  width: 100%;
+  padding: 6px 28px;
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+}
+
+.search-icon {
+  position: absolute;
+  top: 16px;
+  left: 20px;
+  color: var(--text-muted);
+}
+
+/* === Bağlantı Butonu === */
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  padding: 0;
+  margin-left: 4px;
+  font-size: 14px;
+}
+
+.link-btn:hover {
+  text-decoration: underline;
+}
+
+/* === Çöp Kutusu Butonları === */
+.trash-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.restore-btn {
+  padding: 4px 10px;
+  color: var(--success);
+  font-size: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.restore-btn:hover {
+  background-color: var(--success);
+  color: var(--bg-dark);
+}
+
+.delete-btn {
+  padding: 4px 10px;
+  color: var(--danger);
+  font-size: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.delete-btn:hover {
+  background-color: var(--danger);
+  color: var(--bg-dark);
+}
+
+/* === Kullanıcı Bilgisi === */
+.user-info {
+  padding: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+}
+
+
+
+/* === Sıralama Menüsü === */
+.sort-dropdown-container {
+  position: relative;
+}
+
+.sort-dropdown {
+  position: absolute;
+  top: 24px;
+  right: 1;
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  z-index: 10;
+  min-width: 160px;
+  font-size: 13px;
+  padding: 6px 0;
+}
+
+.sort-dropdown div {
+  padding: 6px 12px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.sort-dropdown div:hover {
+  background-color: var(--bg-hover);
+}
