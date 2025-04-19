@@ -15,8 +15,14 @@ import {
 } from './api';
 
 export default function App() {
+
+  window.addEventListener("editor-scroll", (e) => {
+    console.log("📥 Global scroll event geldi:", e.detail);
+  });
+  
   
   const editorRef = useRef(null);
+  const previewRef = useRef(null);
 
   const [theme, setTheme] = useState(() => localStorage.getItem('selectedTheme') || 'TokyoNight');
   const [categories, setCategories] = useState([]);
@@ -91,6 +97,11 @@ export default function App() {
     }
   });
 
+
+  useEffect(() => {
+    window.editorRef = editorRef;
+    window.previewRef = previewRef;
+  }, []);
 
 
     
@@ -215,7 +226,12 @@ export default function App() {
   useEffect(() => {
     if (selectedNote) {
       setTitle(selectedNote.title);
-      setContent(selectedNote.content);
+      setContent((prev) => {
+        if (prev !== selectedNote.content) {
+          return selectedNote.content;
+        }
+        return prev;
+      });
       setNoteStatus(selectedNote.status);
       setNoteTags(selectedNote.tags || []);
     } else {
@@ -430,6 +446,26 @@ export default function App() {
     setLinkHref('');
     setIsLinkModalOpen(true);
   };
+
+  useEffect(() => {
+    const handleScroll = (e) => {
+      const ratio = e.detail;
+      const preview = previewRef.current;
+      if (!preview) return;
+  
+      const max = preview.scrollHeight - preview.clientHeight;
+      if (max <= 0) return;
+  
+      const scrollTop = max * ratio;
+      preview.scrollTop = scrollTop;
+      console.log("📥 PREVIEW scrollTop set:", scrollTop);
+    };
+  
+    window.addEventListener("editor-scroll", handleScroll);
+    return () => window.removeEventListener("editor-scroll", handleScroll);
+  }, []);
+  
+  
   
 
   return (
@@ -530,7 +566,7 @@ export default function App() {
                 setContent={setContent}
                 editorRef={editorRef}
               />
-                <Preview content={content} />
+                <Preview content={content} ref={previewRef} />
               </div>
 
         </div>

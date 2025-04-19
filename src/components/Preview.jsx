@@ -1,3 +1,4 @@
+import React, { forwardRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -6,9 +7,9 @@ import Mermaid from 'react-mermaid2';
 import 'highlight.js/styles/github-dark.css';
 import "../css/MarkdownEditor.css";
 
-export default function Preview({ content }) {
+const Preview = forwardRef(({ content }, ref) => {
   return (
-    <div className="markdown-preview">
+    <div className="markdown-preview" ref={ref}>
       <ReactMarkdown
         children={content}
         remarkPlugins={[remarkGfm]}
@@ -52,4 +53,6 @@ export default function Preview({ content }) {
       />
     </div>
   );
-}
+})
+
+export default Preview;

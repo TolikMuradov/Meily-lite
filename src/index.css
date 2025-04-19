@@ -6,13 +6,13 @@
 @import './css/Modal.css';
 @import './css/EditorTop.css';
 @import './css/sidebar.css';
+@import './css/MarkdownEditor.css';
 
 html, body, #root {
-  height: 100%;
+  height: 100vh;
   margin: 0;
   padding: 0;
   overflow: hidden;
-  overflow-x: hidden;
   background: transparent;
   color: var(--text);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -30,16 +30,8 @@ body.opaque{
 }
 
 .sidebar {
+  min-width: 200px;
   overflow-y: auto;
   background: transparent;
   
 }
-.editor-panel-container {
-  flex: 1;
-  overflow-y: auto;
-  background: transparent;
-  padding: 20px;
-}
-
-
-

@@ -7,7 +7,7 @@ let settingsWindow;
 
 function createMainWindow() {
   mainWindow = new BrowserWindow({
-    width: 1400,
+    width: 1800,
     height: 1000,
     frame: false, // 🔥 pencere çerçevesini kapatır
     transparent: true, // 🔥 arka planı şeffaf yapar

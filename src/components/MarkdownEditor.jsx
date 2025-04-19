@@ -10,7 +10,7 @@ const SLASH_COMMANDS = [
   { label: 'Todo', snippet: '- [ ] ' },
   { label: 'Table', snippet: '| Başlık | Başlık |\n|---|---|\n| Hücre | Hücre |' },
   { label: 'Mermaid', snippet: '```mermaid\ngraph TD;\nA-->B;\n```' },
-  { label: 'H1', snippet: '#' },
+  { label: 'H1', snippet: '# ' },
   { label: 'img', snippet: '![alt](url)' },
 ];
 
@@ -20,6 +20,7 @@ export default function MarkdownEditor({ content, setContent, editorRef }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [query, setQuery] = useState('');
   const slashPos = useRef(null);
+  const [lineCount, setLineCount] = useState(1);
 
   const filteredCommands = SLASH_COMMANDS.filter(cmd =>
     cmd.label.toLowerCase().includes(query.toLowerCase())
@@ -45,6 +46,47 @@ export default function MarkdownEditor({ content, setContent, editorRef }) {
     }
   };
 
+  const editorExtensions = [
+    markdown(),
+    foldGutter(),
+    highlightActiveLine(),
+    indentOnInput(),
+    history(),
+    keymap.of([...defaultKeymap, ...historyKeymap])
+  ];
+
+  const bindScrollSync = (view) => {
+    const sources = [view.scrollDOM, view.dom.querySelector('.cm-scroller')];
+    sources.forEach((scroller) => {
+      if (!scroller) return;
+
+      const handleScroll = () => {
+        const { scrollTop, scrollHeight, clientHeight } = scroller;
+        if (!scrollHeight || !clientHeight || scrollHeight === clientHeight) return;
+
+        const ratio = scrollTop / (scrollHeight - clientHeight);
+        if (isNaN(ratio)) return;
+
+        window.dispatchEvent(new CustomEvent("editor-scroll", { detail: ratio }));
+
+        const lineNumbers = document.querySelector('.line-numbers');
+        if (lineNumbers) {
+          lineNumbers.scrollTop = scrollTop;
+        }
+      };
+
+      scroller.addEventListener("scroll", handleScroll);
+    });
+  };
+
+  useEffect(() => {
+    const root = getComputedStyle(document.documentElement);
+    setThemeVars({
+      backgroundColor: root.getPropertyValue('transparent')?.trim(),
+      color: root.getPropertyValue('--text')?.trim(),
+    });
+  }, [document.documentElement.getAttribute('data-theme')]);
+
   useEffect(() => {
     const view = editorRef.current;
     if (!view) return;
@@ -61,10 +103,8 @@ export default function MarkdownEditor({ content, setContent, editorRef }) {
       } else if (e.key === 'Enter') {
         e.preventDefault();
         e.stopPropagation();
-
         const cmd = filteredCommands[selectedIndex];
         if (cmd) insertSnippet(cmd.snippet);
-
       } else if (e.key === 'Escape') {
         setShowSlash(false);
       }
@@ -75,60 +115,52 @@ export default function MarkdownEditor({ content, setContent, editorRef }) {
     return () => dom.removeEventListener('keydown', handleKeyDown);
   }, [showSlash, selectedIndex, filteredCommands]);
 
-  const editorExtensions = [
-    markdown(),
-    lineNumbers(),
-    foldGutter(),
-    highlightActiveLine(),
-    indentOnInput(),
-    history(),
-    keymap.of([
-      ...defaultKeymap,
-      ...historyKeymap,
-    ])
-  ];
-
-  useEffect(() => {
-    const root = getComputedStyle(document.documentElement);
-    setThemeVars({
-      backgroundColor: root.getPropertyValue('--bg-panel')?.trim(),
-      color: root.getPropertyValue('--text')?.trim(),
-    });
-  }, [document.documentElement.getAttribute('data-theme')]);
-
   return (
     <div className="markdown-editor" style={{ ...themeVars }}>
-      <CodeMirror
-        value={content}
-        height="100%"
-        extensions={editorExtensions}
-        theme="none"
-        onCreateEditor={(view) => {
-          if (editorRef) editorRef.current = view;
-        }}
-        onChange={(value, viewUpdate) => {
-          setContent(value);
-          const view = editorRef.current;
-          if (!view) return;
+      <div className="custom-editor-wrapper">
+        <div className="line-numbers">
+          {Array.from({ length: lineCount }, (_, i) => (
+            <div key={i} className="line-number">{i + 1}</div>
+          ))}
+        </div>
+        <CodeMirror
+          value={content}
+          height="100%"
+          extensions={editorExtensions}
+          theme="dark"
+          lineNumbers={false}
+          onCreateEditor={(view) => {
+            editorRef.current = view;
+            bindScrollSync(view);
+          }}
+          onChange={(value, viewUpdate) => {
+            setContent(value);
+            const view = editorRef.current;
+            if (!view) return;
+            setLineCount(view.state.doc.lines);
 
-          const cursorPos = view.state.selection.main.head;
-          const textBefore = view.state.sliceDoc(Math.max(0, cursorPos - 30), cursorPos);
-          const match = /\/(\w*)$/.exec(textBefore);
+            const cursorPos = view.state.selection.main.head;
+            const textBefore = view.state.sliceDoc(Math.max(0, cursorPos - 30), cursorPos);
+            const match = /\/(\w*)$/.exec(textBefore);
 
-          if (match) {
-            slashPos.current = cursorPos - match[0].length;
-            setQuery(match[1]);
-            setShowSlash(true);
-            setSelectedIndex(0);
-          } else {
-            setShowSlash(false);
-          }
-        }}
-        style={{
-          backgroundColor: 'transparent',
-          color: 'inherit',
-        }}
-      />
+            if (match) {
+              slashPos.current = cursorPos - match[0].length;
+              setQuery(match[1]);
+              setShowSlash(true);
+              setSelectedIndex(0);
+            } else {
+              setShowSlash(false);
+            }
+          }}
+          style={{
+            backgroundColor: 'transparent',
+            color: 'inherit',
+            border: 'none',
+            outline: 'none',
+            width: '100%',
+          }}
+        />
+      </div>
 
       {showSlash && (
         <div className="slash-command-popup">
