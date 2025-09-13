@@ -12,7 +12,12 @@ export const fetchCategories = async () => {
 };
 
 export const fetchNotes = (includeDeleted = false) =>
-  fetch(`${API_URL}/notes/?include_deleted=${includeDeleted}`).then(res => res.json());
+  fetch(`${API_URL}/notes/?include_deleted=${includeDeleted}`).then(res => {
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    return res.json();
+  });
 
 
 
