@@ -222,7 +222,12 @@ export default function App() {
           setSelectedCategory(cats[0] || null);
         }
       })
-      .catch(err => console.error("Veriler alınamadı:", err));
+      .catch(err => {
+        console.error("Veriler alınamadı:", err);
+        // Set empty arrays to prevent further errors
+        setCategories([]);
+        setNotes([]);
+      });
   }, []);
 
   useEffect(() => {

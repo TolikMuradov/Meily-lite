@@ -70,7 +70,15 @@ export const createCategory = (category) =>
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(category)
-    }).then(res => res.json());
+    }).then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    }).catch(err => {
+      console.error('Create category failed:', err);
+      throw err;
+    });
   
   // Kategori güncelle
   export const updateCategory = (id, category) =>

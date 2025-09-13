@@ -139,6 +139,7 @@ export default function Sidebar({
           Kullanıcı Adı
         </div>
         <button className="btn settings-btn" onClick={() => window.api.openSettings()}>
+        <button className="btn settings-btn" onClick={() => window.api && window.api.openSettings && window.api.openSettings()}>
           <FiSettings /> Ayarlar
         </button>
       </div>
