@@ -1,4 +1,4 @@
-// components/CategorySelect.jsx
+components/CategorySelect.jsx
 
 export default function CategorySelect({ categories, selectedCategoryId, onChange }) {
     return (

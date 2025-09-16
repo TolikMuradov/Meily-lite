@@ -13,6 +13,7 @@ import {
   updateNote, deleteNote, createCategory,
   updateCategory, deleteCategory, permanentlyDeleteNote,
 } from './api';
+import useGlobalShortcutsGuard from './hooks/useGlobalShortcutsGuard';
 
 export default function App() {
 
@@ -36,6 +37,7 @@ export default function App() {
   const [noteFilter, setNoteFilter] = useState({ type: 'all' });
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  useGlobalShortcutsGuard(isModalOpen);
   const [modalTitle, setModalTitle] = useState('');
   const [modalDefaultValue, setModalDefaultValue] = useState('');
   const [onModalSubmit, setOnModalSubmit] = useState(null);
@@ -466,7 +468,6 @@ export default function App() {
   }, []);
   
   
-  
 
   return (
     <div className="app-container">
@@ -571,8 +572,8 @@ export default function App() {
 
         </div>
       ) : (
-        <div className="editor-placeholder">
-          <h2>📝 Not seçilmedi</h2>
+        <div className="no-notes-placeholder">
+          <img className='re-empty' src="./public/2.svg" alt="" />
           <p>Notu düzenlemek için bir not seçin ya da yeni not oluşturun.</p>
         </div>
       )}

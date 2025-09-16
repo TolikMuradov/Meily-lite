@@ -274,3 +274,34 @@
   color: var(--text-muted);
   margin-top: 4px;
 }
+
+.no-notes-placeholder {
+  width: 100%;
+  height: calc(90% - 50px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  color: var(--text-muted);
+  gap: 12px;
+}
+
+.empty {
+  width: 100%;
+  opacity: 0.3;
+  margin: 0 auto;
+  max-width: 200px;
+  user-select: none;
+  pointer-events: none;
+  filter: var(--svg);
+}
+
+  .re-empty{
+    width: calc(100% - 50px);
+    max-width: 300px;
+    opacity: 0.3;
+    margin: 0 auto;
+    user-select: none;
+    pointer-events: none;
+    filter: var(--svg);
+  }

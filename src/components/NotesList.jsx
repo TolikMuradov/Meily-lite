@@ -93,10 +93,10 @@ export default function NotesList({
       </div>
 
       {notes.length === 0 ? (
-        <p>
-          No notes in this category.
-          <button onClick={onAddNote} className="btn link-btn">Create one?</button>
-        </p>
+        <div className="no-notes-placeholder">
+          <img className='empty' src="../../public/1.svg" alt="empty" />
+          <p>No notes found.</p>
+        </div>
       ) : (
         notes.map(note => (
           <div
