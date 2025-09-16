@@ -188,7 +188,7 @@ export default function App() {
   useEffect(() => {
     const transparent = localStorage.getItem('transparentMode') === 'true';
     document.body.classList.toggle('opaque', !transparent);
-    if (window.api?.onTransparentToggle) {
+    if (window.api && window.api.onTransparentToggle) {
       window.api.onTransparentToggle((value) => {
         document.body.classList.toggle('opaque', !value);
         localStorage.setItem('transparentMode', value ? 'true' : 'false');
@@ -197,11 +197,13 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    window.api.onThemeChange((theme) => {
-      setTheme(theme);
-      localStorage.setItem('selectedTheme', theme);
-      document.documentElement.setAttribute('data-theme', theme);
-    });
+    if (window.api && window.api.onThemeChange) {
+      window.api.onThemeChange((theme) => {
+        setTheme(theme);
+        localStorage.setItem('selectedTheme', theme);
+        document.documentElement.setAttribute('data-theme', theme);
+      });
+    }
   }, []);
 
   useEffect(() => {
@@ -222,7 +224,12 @@ export default function App() {
           setSelectedCategory(cats[0] || null);
         }
       })
-      .catch(err => console.error("Veriler alınamadı:", err));
+      .catch(err => {
+        console.error("Veriler alınamadı:", err);
+        // Set empty arrays to prevent further errors
+        setCategories([]);
+        setNotes([]);
+      });
   }, []);
 
   useEffect(() => {
@@ -404,8 +411,10 @@ export default function App() {
 
   const handleExportNote = async () => {
     if (!selectedNote) return;
-    const exported = await window.api.exportNote({ title, content });
-    if (exported) alert('📄 Not başarıyla dışa aktarıldı!');
+    if (window.api && window.api.exportNote) {
+      const exported = await window.api.exportNote({ title, content });
+      if (exported) alert('📄 Not başarıyla dışa aktarıldı!');
+    }
   };
 
 
@@ -473,9 +482,9 @@ export default function App() {
     <div className="app-container">
       <div className='drag-bar'></div>
       <div className="window-controls">
-        <button className='minimize' onClick={() => window.api.minimize()}>–</button>
-        <button className='maximize' onClick={() => window.api.maximize()}>◻</button>
-        <button className='close' onClick={() => window.api.close()}>×</button>
+        <button className='minimize' onClick={() => window.api && window.api.minimize()}>–</button>
+        <button className='maximize' onClick={() => window.api && window.api.maximize()}>◻</button>
+        <button className='close' onClick={() => window.api && window.api.close()}>×</button>
       </div>
 
       <Sidebar
