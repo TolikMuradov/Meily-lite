@@ -7,7 +7,13 @@ import NotesList from './components/NotesList';
 import MarkdownEditor from './components/MarkdownEditor';
 import Preview from './components/Preview';
 import EditorTop from './components/EditorTop';
-import Modal from './components/Modal';
+import ModalManager from './components/App/ModalManager';
+import FilterManager from './components/App/FilterManager';
+import AutosaveManager from './components/App/AutosaveManager';
+import ThemeManager from './components/App/ThemeManager';
+import NoteStatsManager from './components/App/NoteStatsManager';
+import NoteActionsManager from './components/App/NoteActionsManager';
+import MarkdownManager from './components/App/MarkdownManager';
 import {
   fetchCategories, fetchNotes, createNote,
   updateNote, deleteNote, createCategory,
@@ -120,41 +126,6 @@ export default function App() {
     return 'All Notes';
   };
 
-  const autosaveRef = useRef(
-    debounce((note) => {
-      if (!note.category) return;
-      updateNote(note.id, note)
-        .then(saved => setNotes(prev => prev.map(n => n.id === saved.id ? saved : n)))
-        .catch(err => console.error("Autosave hatası:", err));
-    }, 1000)
-  );
-
-  const handleChangeTitle = (val) => {
-    setTitle(val);
-    if (selectedNote?.id) {
-      autosaveRef.current({
-        ...selectedNote,
-        title: val,
-        content,
-        status: noteStatus,
-        tag_ids: noteTags.map(t => t.id),
-      });
-    }
-  };
-
-  const handleChangeContent = (val) => {
-    setContent(val);
-    if (selectedNote?.id) {
-      autosaveRef.current({
-        ...selectedNote,
-        title,
-        content: val,
-        status: noteStatus,
-        tag_ids: noteTags.map(t => t.id),
-      });
-    }
-  };
-
   const restoreNote = (note) => {
     const restored = {
       ...note,
@@ -192,16 +163,6 @@ export default function App() {
       window.api.onTransparentToggle((value) => {
         document.body.classList.toggle('opaque', !value);
         localStorage.setItem('transparentMode', value ? 'true' : 'false');
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    if (window.api && window.api.onThemeChange) {
-      window.api.onThemeChange((theme) => {
-        setTheme(theme);
-        localStorage.setItem('selectedTheme', theme);
-        document.documentElement.setAttribute('data-theme', theme);
       });
     }
   }, []);
@@ -263,97 +224,23 @@ export default function App() {
     }
   }, [noteTags]);
 
-  const noteStats = {
-    all: notes.filter(n => !n.is_deleted).length,
-    pinned: notes.filter(n => n.is_pinned && !n.is_deleted).length,
-    trash: notes.filter(n => n.is_deleted).length,
-    status: {
-      active: notes.filter(n => n.status === 'active' && !n.is_deleted).length,
-      on_hold: notes.filter(n => n.status === 'on_hold' && !n.is_deleted).length,
-      completed: notes.filter(n => n.status === 'completed' && !n.is_deleted).length,
-      dropped: notes.filter(n => n.status === 'dropped' && !n.is_deleted).length,
-    },
-    category: {},
-    tags: {}
-  };
+  const noteStats = NoteStatsManager({ notes, categories });
 
-  categories.forEach(cat => {
-    noteStats.category[cat.id] = notes.filter(n => n.category === cat.id && !n.is_deleted).length;
+  const { handleAddNote, handleUpdateNote } = NoteActionsManager({
+    notes,
+    setNotes,
+    selectedNote,
+    setSelectedNote,
+    title,
+    setTitle,
+    content,
+    setContent,
+    noteStatus,
+    noteTags,
+    setNoteFilter,
+    setSelectedCategory,
+    categories
   });
-  allTags.forEach(tag => {
-    noteStats.tags[tag.name] = notes.filter(n =>
-      (n.tags || []).some(t => t.name === tag.name) && !n.is_deleted
-    ).length;
-  });
-
-  const handleAddNote = () => {
-    const defaultCategory = categories.find(c => c.is_default);
-    let categoryId = null;
-
-    if (noteFilter.type === 'category') {
-      categoryId = noteFilter.id;
-    } else if (selectedCategory?.id) {
-      categoryId = selectedCategory.id;
-    }
-
-    if (!categoryId) {
-      const fallback = defaultCategory || categories[0];
-      if (fallback) {
-        categoryId = fallback.id;
-        setSelectedCategory(fallback);
-        setNoteFilter({ type: 'category', id: fallback.id });
-      }
-    }
-
-    const newNote = {
-      title: 'Yeni Not',
-      content: 'write something here ...',
-      category: categoryId,
-      is_pinned: false,
-      is_deleted: false,
-      status: 'active',
-      tag_ids: []
-    };
-
-    createNote(newNote)
-      .then(note => {
-        if (note?.id) {
-          setNotes(prev => [note, ...prev]);
-          setSelectedNote(note);
-          setTitle(note.title);
-          setContent(note.content);
-        } else {
-          alert('Not oluşturulamadı.');
-        }
-      })
-      .catch(err => console.error('Not oluşturulamadı:', err));
-  };
-  
-  
-
-  const handleUpdateNote = () => {
-    if (!selectedNote?.id) return alert('Güncellemek için not seçmelisin!');
-    const updatedNote = {
-      ...selectedNote,
-      title: title || "Başlıksız",
-      content: content || "İçerik boş olamaz",
-      status: noteStatus,
-      tag_ids: noteTags.map(t => t.id)
-    };
-    updateNote(selectedNote.id, updatedNote)
-      .then(note => {
-        if (note?.id) {
-          setNotes(notes.map(n => n.id === note.id ? note : n));
-          setSelectedNote(note);
-        } else {
-          alert('Backend geçersiz veri döndü.');
-        }
-      })
-      .catch(err => {
-        console.error('Güncelleme hatası:', err);
-        alert('Not güncellenemedi!');
-      });
-  };
 
   const handleDeleteNote = () => {
     if (!selectedNote || !confirm("trush stediğinize emin misiniz?")) return;
@@ -407,7 +294,10 @@ export default function App() {
     });
   };
 
-  const handleInsertMarkdown = (syntax) => setContent((prev) => prev + syntax);
+  const { handleInsertMarkdown, insertMarkdownAtCursor } = MarkdownManager({
+    setContent,
+    editorRef
+  });
 
   const handleExportNote = async () => {
     if (!selectedNote) return;
@@ -420,31 +310,6 @@ export default function App() {
 
 
 
-  const insertMarkdownAtCursor = (snippetStart, snippetEnd = '') => {
-    const view = editorRef.current;
-    if (!view) return;
-  
-    const { state, dispatch } = view;
-    const selection = state.selection.main;
-    const selectedText = state.sliceDoc(selection.from, selection.to);
-  
-    const newText = `${snippetStart}${selectedText}${snippetEnd}`;
-    dispatch({
-      changes: {
-        from: selection.from,
-        to: selection.to,
-        insert: newText
-      },
-      selection: {
-        anchor: selection.from + snippetStart.length,
-        head: selection.from + newText.length - snippetEnd.length
-      },
-      scrollIntoView: true
-    });
-  
-    view.focus();
-  };
-  
   const handleLinkClick = () => {
     const view = editorRef.current;
     if (!view) return;
@@ -477,6 +342,17 @@ export default function App() {
   }, []);
   
   
+
+  const { handleChangeTitle, handleChangeContent } = AutosaveManager({
+    selectedNote,
+    title,
+    content,
+    noteStatus,
+    noteTags,
+    setNotes,
+    setTitle,
+    setContent
+  });
 
   return (
     <div className="app-container">
@@ -573,7 +449,7 @@ export default function App() {
               <div className="editor-preview-container">
               <MarkdownEditor
                 content={content}
-                setContent={setContent}
+                setContent={handleChangeContent}
                 editorRef={editorRef}
               />
                 <Preview content={content} ref={previewRef} />
@@ -587,79 +463,18 @@ export default function App() {
         </div>
       )}
 
-      <Modal
-        isOpen={isModalOpen}
-        title={modalTitle}
-        defaultValue={modalDefaultValue}
-        onSubmit={onModalSubmit}
-        onClose={() => setIsModalOpen(false)}
+      <ModalManager
+        isModalOpen={isModalOpen}
+        modalTitle={modalTitle}
+        modalDefaultValue={modalDefaultValue}
+        onModalSubmit={onModalSubmit}
+        setIsModalOpen={setIsModalOpen}
+        isLinkModalOpen={isLinkModalOpen}
+        linkText={linkText}
+        setLinkText={setLinkText}
+        linkHref={linkHref}
+        setLinkHref={setLinkHref}
       />
-
-{isLinkModalOpen && (
-  <div className="modal-overlay">
-    <div className="modal-content" onClick={e => e.stopPropagation()}>
-      <h3>Link Ekle</h3>
-      <form onSubmit={(e) => {
-          e.preventDefault(); // sayfa yenilenmesini engelle
-          const view = editorRef.current;
-          if (!view) return;
-
-          const { state, dispatch } = view;
-          const selection = state.selection.main;
-
-          const markdown = `[${linkText}](${linkHref})`;
-
-          dispatch({
-            changes: { from: selection.from, to: selection.to, insert: markdown },
-            selection: {
-              anchor: selection.from + markdown.length,
-            },
-            scrollIntoView: true,
-          });
-
-          setIsLinkModalOpen(false);
-        }}>
-      <label>Metin</label>
-      <input
-        type="text"
-        value={linkText}
-        onChange={(e) => setLinkText(e.target.value)}
-      />
-
-      <label>URL</label>
-      <input
-        type="text"
-        value={linkHref}
-        onChange={(e) => setLinkHref(e.target.value)}
-        placeholder="https://..."
-      />
-
-      <div className="modal-buttons">
-        <button className="btn" onClick={() => {
-          const view = editorRef.current;
-          if (!view) return;
-
-          const { state, dispatch } = view;
-          const selection = state.selection.main;
-
-          const markdown = `[${linkText}](${linkHref})`;
-
-          dispatch({
-            changes: { from: selection.from, to: selection.to, insert: markdown },
-            selection: {
-              anchor: selection.from + markdown.length,
-            },
-            scrollIntoView: true,
-          });
-
-          setIsLinkModalOpen(false);
-        }}>Ekle</button>
-        <button className="btn" onClick={() => setIsLinkModalOpen(false)}>İptal</button>
-      </div>
-      </form>
-    </div>
-  </div>
-)}
 
 
       {showContextMenu && contextCategory && (
@@ -699,7 +514,8 @@ export default function App() {
           )}
         </div>
       )}
-      
+
+      <ThemeManager theme={theme} setTheme={setTheme} />
     </div>
   );
 }

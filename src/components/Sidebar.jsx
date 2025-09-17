@@ -12,6 +12,9 @@ import {
   FiPlus,
 } from 'react-icons/fi';
 import '../css/sidebar.css';
+import SidebarHeader from './Sidebar/SidebarHeader';
+import SidebarSection from './Sidebar/SidebarSection';
+import SidebarItem from './Sidebar/SidebarItem';
 
 export default function Sidebar({
   categories,
@@ -21,11 +24,10 @@ export default function Sidebar({
   setContextMenuPos,
   setShowContextMenu,
   handleAddCategory,
-  handleUpdateCategory,  
-  handleDeleteCategory,  
   tagsList,
   noteFilter,
 }) {
+  
   const isActive = (type, value) => {
     if (!noteFilter) return false;
     if (type === 'tag') return noteFilter.type === 'tag' && noteFilter.tag === value;
@@ -36,23 +38,26 @@ export default function Sidebar({
 
   return (
     <div className="sidebar">
-      <div className="sidebar-header">
-        <div className="logo">Meily-lite</div>
-        <div className="menu-btn">☰</div>
-      </div>
+      <SidebarHeader/>
 
-      <div className="sidebar-section">
-        <button className={`sidebar-btn ${isActive('all') ? 'active' : ''}`} onClick={() => setNoteFilter({ type: 'all' })}>
-          <FiFileText /> All Notes
-          <span className="count">{noteStats?.all ?? 0}</span>
-        </button>
-        <button className={`sidebar-btn ${isActive('pinned') ? 'active' : ''}`} onClick={() => setNoteFilter({ type: 'pinned' })}>
-          <FiStar /> Pinned
-          <span className="count">{noteStats?.pinned ?? 0}</span>
-        </button>
-      </div>
+      <SidebarSection>
+        <SidebarItem
+          isActive={isActive('all')}
+          onClick={() => setNoteFilter({ type: 'all' })}
+          icon={FiFileText}
+          label="All Notes"
+          count={noteStats?.all ?? 0}
+        />
+        <SidebarItem
+          isActive={isActive('pinned')}
+          onClick={() => setNoteFilter({ type: 'pinned' })}
+          icon={FiStar}
+          label="Pinned"
+          count={noteStats?.pinned ?? 0}
+        />
+      </SidebarSection>
 
-      <div className="sidebar-section">
+      <SidebarSection>
         <div className="sidebar-section-header">
           <h5>Notebooks</h5>
           <button className="icon-btn" onClick={handleAddCategory}>
@@ -60,9 +65,9 @@ export default function Sidebar({
           </button>
         </div>
         {categories.map(cat => (
-          <div
+          <SidebarItem
             key={cat.id}
-            className={`sidebar-item ${isActive('category', cat.id) ? 'active' : ''}`}
+            isActive={isActive('category', cat.id)}
             onClick={() => setNoteFilter({ type: 'category', id: cat.id })}
             onContextMenu={(e) => {
               if (cat.is_default) return;
@@ -71,66 +76,78 @@ export default function Sidebar({
               setContextMenuPos({ x: e.pageX, y: e.pageY });
               setShowContextMenu(true);
             }}
-          >
-            <FiFolder style={{ marginRight: 6, flexShrink: 0 }} />
-            <span className="label-text">{cat.name}</span>
-            <span className="count">{noteStats?.category?.[cat.id] ?? 0}</span>
-          </div>
+            icon={FiFolder}
+            label={cat.name}
+            count={noteStats?.category?.[cat.id] ?? 0}
+          />
         ))}
-      </div>
+      </SidebarSection>
 
-      <div className="sidebar-section">
-        <button className={`sidebar-btn ${isActive('trash') ? 'active' : ''}`} onClick={() => setNoteFilter({ type: 'trash' })}>
-          <FiTrash2 /> Trash
-          <span className="count">{noteStats?.trash ?? 0}</span>
-        </button>
-      </div>
+      <SidebarSection>
+        <SidebarItem
+          isActive={isActive('trash')}
+          onClick={() => setNoteFilter({ type: 'trash' })}
+          icon={FiTrash2}
+          label="Trash"
+          count={noteStats?.trash ?? 0}
+        />
+      </SidebarSection>
 
-      <div className="sidebar-section">
-        <h5>Status</h5>
-        <button className={`sidebar-btn ${isActive('status', 'active') ? 'active' : ''}`} onClick={() => setNoteFilter({ type: 'status', status: 'active' })}>
-          <FiPlay className='play' /> Active
-          <span className="count">{noteStats?.status?.active ?? 0}</span>
-        </button>
-        <button className={`sidebar-btn ${isActive('status', 'on_hold') ? 'active' : ''}`} onClick={() => setNoteFilter({ type: 'status', status: 'on_hold' })}>
-          <FiPause className='pause' /> On Hold
-          <span className="count">{noteStats?.status?.on_hold ?? 0}</span>
-        </button>
-        <button className={`sidebar-btn ${isActive('status', 'completed') ? 'active' : ''}`} onClick={() => setNoteFilter({ type: 'status', status: 'completed' })}>
-          <FiCheckCircle className='check' /> Completed
-          <span className="count">{noteStats?.status?.completed ?? 0}</span>
-        </button>
-        <button className={`sidebar-btn ${isActive('status', 'dropped') ? 'active' : ''}`} onClick={() => setNoteFilter({ type: 'status', status: 'dropped' })}>
-          <FiXCircle className='x' /> Dropped
-          <span className="count">{noteStats?.status?.dropped ?? 0}</span>
-        </button>
-      </div>
+      <SidebarSection title="Status">
+        <SidebarItem
+          isActive={isActive('status', 'active')}
+          onClick={() => setNoteFilter({ type: 'status', status: 'active' })}
+          icon={FiPlay}
+          label="Active"
+          count={noteStats?.status?.active ?? 0}
+          className="play"
+        />
+        <SidebarItem
+          isActive={isActive('status', 'on_hold')}
+          onClick={() => setNoteFilter({ type: 'status', status: 'on_hold' })}
+          icon={FiPause}
+          label="On Hold"
+          count={noteStats?.status?.on_hold ?? 0}
+          className="pause"
+        />
+        <SidebarItem
+          isActive={isActive('status', 'completed')}
+          onClick={() => setNoteFilter({ type: 'status', status: 'completed' })}
+          icon={FiCheckCircle}
+          label="Completed"
+          count={noteStats?.status?.completed ?? 0}
+          className="check"
+        />
+        <SidebarItem
+          isActive={isActive('status', 'dropped')}
+          onClick={() => setNoteFilter({ type: 'status', status: 'dropped' })}
+          icon={FiXCircle}
+          label="Dropped"
+          count={noteStats?.status?.dropped ?? 0}
+          className="x"
+        />
+      </SidebarSection>
 
       {tagsList && tagsList.length > 0 && (
-        <div className="sidebar-section">
-          <h5>Tags</h5>
+        <SidebarSection title="Tags">
           {tagsList.map(tag => (
-            <div
+            <SidebarItem
               key={`tag-${tag.id || tag.name}`}
-              className={`sidebar-item tags ${isActive('tag', tag.name) ? 'active' : ''}`}
+              isActive={isActive('tag', tag.name)}
               onClick={() => setNoteFilter({ type: 'tag', tag: tag.name })}
-            >
-              <span
-                className="tag-color-dot"
-                style={{
-                  backgroundColor: tag.color,
-                  width: 10,
-                  height: 10,
-                  borderRadius: '50%',
-                  display: 'inline-block',
-                  marginRight: 8
-                }}
-              />
-              <span className="label-text">{tag.name}</span>
-              <span className="count">{noteStats?.tags?.[tag.name] ?? 0}</span>
-            </div>
+              label={tag.name}
+              count={noteStats?.tags?.[tag.name] ?? 0}
+              style={{
+                backgroundColor: tag.color,
+                borderRadius: '50%',
+                width: 10,
+                height: 10,
+                display: 'inline-block',
+                marginRight: 8
+              }}
+            />
           ))}
-        </div>
+        </SidebarSection>
       )}
 
       <div className="sidebar-footer">
@@ -142,8 +159,6 @@ export default function Sidebar({
           <FiSettings /> Ayarlar
         </button>
       </div>
-
-      
     </div>
   );
 }

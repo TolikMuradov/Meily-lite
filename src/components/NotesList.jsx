@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 
 import {
-  FiFilter, FiEdit, FiPaperclip,
+  FiSearch, FiEdit, FiPaperclip,
   FiPlay, FiPause, FiCheckCircle, FiXCircle
 } from 'react-icons/fi';
 import { BsSortDown } from "react-icons/bs";
@@ -83,10 +83,10 @@ export default function NotesList({
       </div>
 
       <div className="notes-search">
-        <FiFilter className="search-icon" />
+        <FiSearch className="search-icon" />
         <input
           type="text"
-          placeholder="Filter"
+          placeholder="Search notes..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />

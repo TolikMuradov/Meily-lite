@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('api', {
   close: () => ipcRenderer.send('window:close'),
   onTransparentToggle: (callback) =>
     ipcRenderer.on('transparent-mode', (_, value) => callback(value)),
+  setTheme: (theme) => ipcRenderer.send('set-theme', theme),
 
   openExternalLink: (url) => ipcRenderer.send('open-link', url),
 });

@@ -62,7 +62,12 @@ ipcMain.on('open-settings-window', () => {
 
 // IPC: Tema değiştirme
 ipcMain.on('set-theme', (event, theme) => {
-  mainWindow.webContents.send('theme-changed', theme);
+  if (mainWindow) {
+    mainWindow.webContents.send('theme-changed', theme);
+  }
+  if (settingsWindow) {
+    settingsWindow.webContents.send('theme-changed', theme);
+  }
 });
 
 // ✅ IPC: Resim seçme ve public klasörüne kopyalama
