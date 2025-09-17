@@ -4,6 +4,7 @@ import { markdown } from '@codemirror/lang-markdown';
 import { keymap, lineNumbers, highlightActiveLine } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { indentOnInput, foldGutter } from '@codemirror/language';
+import debounce from 'lodash.debounce';
 import '../css/MarkdownEditor.css';
 
 const SLASH_COMMANDS = [
@@ -14,7 +15,7 @@ const SLASH_COMMANDS = [
   { label: 'img', snippet: '![alt](url)' },
 ];
 
-export default function MarkdownEditor({ content, setContent, editorRef }) {
+export default function MarkdownEditor({ content, setContent, editorRef, onAutosave }) {
   const [themeVars, setThemeVars] = useState({});
   const [showSlash, setShowSlash] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -57,26 +58,32 @@ export default function MarkdownEditor({ content, setContent, editorRef }) {
 
   const bindScrollSync = (view) => {
     const sources = [view.scrollDOM, view.dom.querySelector('.cm-scroller')];
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = sources[0];
+      if (!scrollHeight || !clientHeight || scrollHeight === clientHeight) return;
+
+      const ratio = scrollTop / (scrollHeight - clientHeight);
+      if (isNaN(ratio)) return;
+
+      window.dispatchEvent(new CustomEvent("editor-scroll", { detail: ratio }));
+
+      const lineNumbers = document.querySelector('.line-numbers');
+      if (lineNumbers) {
+        lineNumbers.scrollTop = scrollTop;
+      }
+    };
+
     sources.forEach((scroller) => {
       if (!scroller) return;
-
-      const handleScroll = () => {
-        const { scrollTop, scrollHeight, clientHeight } = scroller;
-        if (!scrollHeight || !clientHeight || scrollHeight === clientHeight) return;
-
-        const ratio = scrollTop / (scrollHeight - clientHeight);
-        if (isNaN(ratio)) return;
-
-        window.dispatchEvent(new CustomEvent("editor-scroll", { detail: ratio }));
-
-        const lineNumbers = document.querySelector('.line-numbers');
-        if (lineNumbers) {
-          lineNumbers.scrollTop = scrollTop;
-        }
-      };
-
       scroller.addEventListener("scroll", handleScroll);
     });
+
+    return () => {
+      sources.forEach((scroller) => {
+        if (!scroller) return;
+        scroller.removeEventListener("scroll", handleScroll);
+      });
+    };
   };
 
   useEffect(() => {
@@ -93,6 +100,11 @@ export default function MarkdownEditor({ content, setContent, editorRef }) {
 
     const handleKeyDown = (e) => {
       if (!showSlash) return;
+
+      if (filteredCommands.length === 0) { // Close popup if no commands are available
+        setShowSlash(false);
+        return;
+      }
 
       if (e.key === 'ArrowDown') {
         e.preventDefault();
@@ -113,7 +125,21 @@ export default function MarkdownEditor({ content, setContent, editorRef }) {
     const dom = view.dom;
     dom.addEventListener('keydown', handleKeyDown);
     return () => dom.removeEventListener('keydown', handleKeyDown);
-  }, [showSlash, selectedIndex, filteredCommands]);
+  }, [showSlash, selectedIndex, filteredCommands.length]);
+
+  const debouncedAutosave = useRef(
+    debounce((value) => {
+      if (onAutosave) {
+        onAutosave(value);
+      }
+    }, 1000)
+  ).current;
+
+  useEffect(() => {
+    return () => {
+      debouncedAutosave.cancel();
+    };
+  }, [debouncedAutosave]);
 
   return (
     <div className="markdown-editor" style={{ ...themeVars }}>
@@ -131,21 +157,23 @@ export default function MarkdownEditor({ content, setContent, editorRef }) {
           lineNumbers={false}
           onCreateEditor={(view) => {
             editorRef.current = view;
-            bindScrollSync(view);
+            const cleanup = bindScrollSync(view);
+            return cleanup;
           }}
           onChange={(value, viewUpdate) => {
             setContent(value);
+            debouncedAutosave(value);
             const view = editorRef.current;
             if (!view) return;
             setLineCount(view.state.doc.lines);
 
             const cursorPos = view.state.selection.main.head;
             const textBefore = view.state.sliceDoc(Math.max(0, cursorPos - 30), cursorPos);
-            const match = /\/(\w*)$/.exec(textBefore);
+            const match = /\/(\w*)?$/.exec(textBefore);
 
             if (match) {
               slashPos.current = cursorPos - match[0].length;
-              setQuery(match[1]);
+              setQuery(match[1] || '');
               setShowSlash(true);
               setSelectedIndex(0);
             } else {

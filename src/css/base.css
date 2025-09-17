@@ -73,4 +73,23 @@
   .window-controls .close:hover {
       color: var(--danger) !important;
   }
-  
+
+  /* Global scrollbar styles */
+*::-webkit-scrollbar {
+  width: 5px; /* Scrollbar genişliği */
+  height: 5px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--text-muted); /* Scrollbar thumb color */
+  border-radius: 4px; /* Rounded corners */
+  transition: background 0.5s;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--text); /* Darker color on hover */
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent; /* Transparent track */
+}

@@ -28,8 +28,14 @@ function createMainWindow() {
 
 function createSettingsWindow() {
   settingsWindow = new BrowserWindow({
-    width: 500,
-    height: 400,
+    width: 510,
+    height: 560,
+    frame: false, // 🔥 pencere çerçevesini kapatır
+    transparent: true, // 🔥 arka planı şeffaf yapar
+    backgroundColor: '#00000000', // 🪟 Windows için tam şeffaf
+    vibrancy: 'fullscreen-ui', // macOS
+    backgroundMaterial: 'acrylic', // Windows 11
+    visualEffectState: 'active',
     parent: mainWindow,
     modal: true,
     webPreferences: {
@@ -121,6 +127,12 @@ ipcMain.on('open-link', (event, url) => {
   }
 });
 
+// ✅ IPC: Settings penceresini kapatma
+ipcMain.on('close-settings-window', () => {
+  if (settingsWindow) {
+    settingsWindow.close();
+  }
+});
 
 app.whenReady().then(() => {
   createMainWindow();

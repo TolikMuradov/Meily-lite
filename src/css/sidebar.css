@@ -97,13 +97,11 @@
   
   .count {
   flex-shrink: 0;
-  background-color: var(--bg-hover);
-  border-radius: 12px;
   font-size: 12px;
   color: var(--text-muted);
   padding: 2px 6px;
   min-width: 20px;
-  text-align: center;
+  text-align: end;
 }
  .play{
     color: var(--primary);

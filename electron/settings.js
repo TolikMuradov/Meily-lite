@@ -1,4 +1,4 @@
-  const setTheme = (theme) => {
+const setTheme = (theme) => {
     window.api.setTheme(theme);
   };
 
@@ -49,6 +49,10 @@
     }
 
     resultMsg.textContent = '✅ Varsayılan kategori güncellendi.';
+  }
+
+  function closeSettings() {
+    window.api.closeSettingsWindow();
   }
 
   loadCategories();

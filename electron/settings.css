@@ -1,0 +1,105 @@
+body {
+  background: transparent;
+  backdrop-filter: blur(10px);
+  color: white;
+  font-family: 'Roboto', sans-serif;
+  padding: 20px;
+  margin: 0;
+}
+
+.settings-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background: rgba(41, 41, 41, 0.9);
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.settings-title {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: #ffcc00;
+}
+
+.theme-section, .transparent-section, .category-section, .future-section {
+  margin-bottom: 20px;
+}
+
+.theme-button, .apply-button, .placeholder-button {
+  background: #444;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  margin: 5px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.theme-button:hover, .apply-button:hover, .placeholder-button:hover {
+  background: #555;
+}
+
+.transparent-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+}
+
+#defaultCategorySelect {
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #444;
+  background: #333;
+  color: white;
+}
+
+.result-message {
+  color: lightgreen;
+  font-size: 0.9rem;
+}
+
+.placeholder-button {
+  background: #555;
+  color: #ddd;
+  border: 1px dashed #777;
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: transparent;
+  color: white;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.close-button:hover {
+  color: #ff5555;
+}
+
+  /* Global scrollbar styles */
+*::-webkit-scrollbar {
+  width: 5px; /* Scrollbar genişliği */
+  height: 5px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--text-muted); /* Scrollbar thumb color */
+  border-radius: 4px; /* Rounded corners */
+  transition: background 0.5s;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--text); /* Darker color on hover */
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent; /* Transparent track */
+}

@@ -69,7 +69,7 @@
   white-space: pre-wrap !important;
   word-break: break-word !important;
   overflow-wrap: anywhere !important;
-  min-width: 0 !important; /* 👑 bu olmazsa satır uzayabilir */
+  min-width: 0 !important; /* bu olmazsa satır uzayabilir */
   box-sizing: border-box !important;
 }
 
@@ -81,22 +81,51 @@
   font-size: 14px;
   line-height: 1.6;
   color: var(--text);
-  background-color: transparent !important;
+  background: transparent !important;
 }
 
-.markdown-preview pre {
-  background: transparent !important;
-  padding: 12px;
+.markdown-preview pre { 
+  color: var(--text); 
   border-radius: 6px;
+  padding: 12px;
   overflow-x: auto;
+  position: relative; /* Copy butonu için gerekli */
 }
 
-.markdown-preview .mermaid {
-  background: transparent !important;
+ .btnbg{
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  padding: 20px;
+  color: var(--text);
+  z-index: 10;
+}
+
+.markdown-preview pre .copy-button {
+  background: var(--bg-button);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.markdown-preview pre .copy-button:hover {
+  background: var(--bg-hover);
+}
+
+.markdown-preview pre .mermaid{
+  background:transparent;
   border-radius: 6px;
   padding: 12px;
   margin-top: 8px;
 }
+
 
 /* Slash command popup */
 .slash-command-popup {
@@ -173,8 +202,13 @@
   height: 1.6em;
 }
 
+.markdown-preview pre.language-mermaid {
+  background: transparent !important;
+}
 
-
+.markdown-preview pre.language-mermaid code {
+  background: transparent !important;
+}
 
 
 
