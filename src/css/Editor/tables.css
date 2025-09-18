@@ -1,0 +1,21 @@
+.markdown-preview table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 8px 0 16px;
+}
+
+.markdown-preview th,
+.markdown-preview td {
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  vertical-align: top;
+}
+
+.markdown-preview thead th {
+  background: var(--bg-panel);
+  font-weight: 600;
+}
+
+.markdown-preview tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--panel, #161a22) 40%, transparent);
+}

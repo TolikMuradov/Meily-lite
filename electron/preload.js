@@ -6,6 +6,8 @@ contextBridge.exposeInMainWorld('api', {
   onThemeChange: (callback) => ipcRenderer.on('theme-changed', (_, theme) => callback(theme)),
   selectImage: () => ipcRenderer.invoke('select-image'),
   exportNote: (note) => ipcRenderer.invoke('export-note', note),
+  copyImage: (filePath) => ipcRenderer.invoke('copy-image', filePath),
+  copyImageBuffer: (name, arrayBuffer) => ipcRenderer.invoke('copy-image-buffer', { name, data: arrayBuffer }),
   minimize: () => ipcRenderer.send('window:minimize'),
   maximize: () => ipcRenderer.send('window:maximize'),
   close: () => ipcRenderer.send('window:close'),

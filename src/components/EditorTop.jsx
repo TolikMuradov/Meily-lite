@@ -1,4 +1,3 @@
-
 import NoteMetaControls from './NoteMetaControls';
 import '../css/EditorTop.css';
 import {
@@ -34,7 +33,7 @@ export default function EditorTop({
   onLinkClick,
 }) {
   return (
-    <div className="editor-top-container">
+    <div className="editor-top-container" style={{ padding: '20px', fontSize: '1.2em' }}>
       {/* 📝 Başlık */}
       <input
         type="text"
@@ -42,6 +41,7 @@ export default function EditorTop({
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Başlık"
+        style={{ fontSize: '1.5em', padding: '10px' }}
       />
 
       {/* 📂 Kategori, Durum, Etiketler */}
@@ -56,8 +56,8 @@ export default function EditorTop({
       />
 
       {/* 🔧 Toolbar ve Butonlar */}
-      <div className="toolbar-and-buttons">
-        <div className="toolbar">
+      <div className="toolbar-and-buttons" style={{ marginTop: '15px' }}>
+        <div className="toolbar" style={{ gap: '10px' }}>
           <button className='header' onClick={() => onInsertMarkdown('#')}><PiHashStraightDuotone /></button>
           <button onClick={() => onInsertMarkdown('**', '**')} title="Bold">
             <FiBold />
@@ -95,20 +95,18 @@ export default function EditorTop({
         </div>
 
         {/* 📌 Pin + Kaydet/Sil/Dışa Aktar */}
-        <div className="editor-buttons">
+        <div className="editor-buttons" style={{ marginTop: '10px' }}>
           {note && (
-            <button className="btn" onClick={onTogglePin}>
+            <button className="btn" onClick={onTogglePin} style={{ fontSize: '0.8em', padding: '8px 12px' }}>
               <FiPaperclip style={{ marginRight: 4 }} />
-              {note.is_pinned ? 'Sabitlenmiş' : 'Üste Sabitle'}
+              {note.is_pinned ? 'Pinned' : 'Pin to top'}
             </button>
           )}
-          <button className="btn" onClick={onSave}>Kaydet</button>
-          <button className="btn" onClick={onDelete}>Sil</button>
-          <button className="btn" onClick={onExport}>Dışa Aktar</button>
+          <button className="btn" onClick={onSave} style={{ fontSize: '0.8em', padding: '8px 12px' }}>Save</button>
+          <button className="btn" onClick={onDelete} style={{ fontSize: '0.8em', padding: '8px 12px' }}>Delete</button>
+          <button className="btn" onClick={onExport} style={{ fontSize: '0.8em', padding: '8px 12px' }}>Export</button>
         </div>
       </div>
-
-  
 
     </div>
   );

@@ -1,0 +1,22 @@
+.markdown-preview .katex-display {
+display: block; /* blok olarak davran */
+text-align: center; /* ortala */
+margin: 1rem auto; /* yatay otomatik margin = ortalama */
+}
+
+.markdown-preview p:has(.katex):only-child { /* yalnızca satırda tek başına ise */
+text-align: center;
+}
+
+.markdown-preview .katex-display > .katex > .katex-html {
+max-width: 100%;
+}
+
+.markdown-preview .katex-display {
+overflow-x: auto; /* çok geniş formüllerde güvenlik */
+}
+
+.markdown-preview .katex-display {
+margin-top: 0.75rem;
+margin-bottom: 0.75rem;
+}

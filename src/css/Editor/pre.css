@@ -1,0 +1,46 @@
+.markdown-preview pre { 
+  color: var(--text); 
+  border-radius: 6px;
+  padding: 12px;
+  overflow-x: auto;
+  position: relative; /* Copy butonu için gerekli */
+}
+
+.markdown-preview pre .mermaid{
+  background:transparent;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 8px;
+}
+
+.markdown-preview pre.language-mermaid {
+  background: transparent !important;
+}
+
+.markdown-preview pre.language-mermaid code {
+  background: transparent !important;
+}
+
+.markdown-preview pre .copy-button,
+.copy-button {
+  position: absolute; /* Copy butonu için gerekli */
+  top: 5px;
+  right: 5px;
+  margin-left: auto; 
+  background: var(--bg-button);
+  color: var(--text);
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.copy-button:hover{
+  background: var(--bg-hover);
+}
+
+.markdown-preview pre .copy-button:hover {
+  background: var(--bg-hover);
+}

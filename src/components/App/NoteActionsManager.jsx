@@ -16,21 +16,23 @@ export default function NoteActionsManager({
   categories
 }) {
   const handleAddNote = (categoryId) => {
-    const fallback = categories.find(c => c.is_default) || categories[0];
-    if (!categoryId && fallback) {
-      setSelectedCategory(fallback);
-      setNoteFilter({ type: 'category', id: fallback.id });
-    }
+    console.log('handleAddNote called with categoryId:', categoryId);
+    
+    const fallbackCategory = categories.find(c => c.is_default) || categories[0];
+    const resolvedCategoryId = categoryId || fallbackCategory?.id;
+    console.log('Resolved categoryId:', resolvedCategoryId);
 
     const newNote = {
       title: 'Yeni Not',
       content: 'write something here ...',
-      category: categoryId,
+      category: resolvedCategoryId,
       is_pinned: false,
       is_deleted: false,
       status: 'active',
       tag_ids: []
     };
+
+    console.log('Payload for createNote:', newNote);
 
     createNote(newNote)
       .then(note => {

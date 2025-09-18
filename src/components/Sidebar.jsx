@@ -28,6 +28,7 @@ export default function Sidebar({
   noteFilter,
 }) {
   
+
   const isActive = (type, value) => {
     if (!noteFilter) return false;
     if (type === 'tag') return noteFilter.type === 'tag' && noteFilter.tag === value;
@@ -136,7 +137,7 @@ export default function Sidebar({
               isActive={isActive('tag', tag.name)}
               onClick={() => setNoteFilter({ type: 'tag', tag: tag.name })}
               label={tag.name}
-              count={noteStats?.tags?.[tag.name] ?? 0}
+              count={noteStats?.tags?.[tag.name]?.count ?? 0}
               style={{
                 backgroundColor: tag.color,
                 borderRadius: '50%',
@@ -153,10 +154,10 @@ export default function Sidebar({
       <div className="sidebar-footer">
         <div className="user-info">
           <FiUser style={{ marginRight: 6 }} />
-          Kullanıcı Adı
+          User Profile
         </div>
         <button className="btn settings-btn" onClick={() => window.api.openSettings()}>
-          <FiSettings /> Ayarlar
+          <FiSettings /> Settings
         </button>
       </div>
     </div>

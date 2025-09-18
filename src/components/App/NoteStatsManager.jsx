@@ -1,4 +1,4 @@
-export default function NoteStatsManager({ notes, categories }) {
+function calculateNoteStats(notes, categories) {
   const noteStats = {
     all: notes.filter(n => !n.is_deleted).length,
     pinned: notes.filter(n => n.is_pinned && !n.is_deleted).length,
@@ -17,5 +17,18 @@ export default function NoteStatsManager({ notes, categories }) {
     noteStats.category[cat.id] = notes.filter(n => n.category === cat.id && !n.is_deleted).length;
   });
 
+  notes.forEach(note => {
+    if (note.tags && Array.isArray(note.tags)) {
+      note.tags.forEach(tag => {
+        if (!noteStats.tags[tag.name]) {
+          noteStats.tags[tag.name] = { count: 0, id: tag.id, color: tag.color || '#E45826' };
+        }
+        noteStats.tags[tag.name].count += 1;
+      });
+    }
+  });
+
   return noteStats;
 }
+
+export default calculateNoteStats;

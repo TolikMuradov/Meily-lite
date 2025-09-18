@@ -112,6 +112,58 @@ ipcMain.handle('export-note', async (event, { title, content }) => {
   return true;
 });
 
+// ✅ IPC: Dışarıdan sürüklenen görseli kopyala ve erişim URI'si döndür
+ipcMain.handle('copy-image', async (event, filePath) => {
+  try {
+    if (!filePath) return null;
+    const publicImagesPath = path.join(__dirname, '..', 'public', 'user-images');
+    if (!fs.existsSync(publicImagesPath)) {
+      fs.mkdirSync(publicImagesPath, { recursive: true });
+    }
+    const ext = path.extname(filePath) || '';
+    const base = path.basename(filePath, ext);
+    let fileName = `${base}${ext}`;
+    let destPath = path.join(publicImagesPath, fileName);
+    if (fs.existsSync(destPath)) {
+      const stamp = Date.now();
+      fileName = `${base}-${stamp}${ext}`;
+      destPath = path.join(publicImagesPath, fileName);
+    }
+    fs.copyFileSync(filePath, destPath);
+    return `/user-images/${fileName}`;
+  } catch (err) {
+    console.error('copy-image error:', err);
+    return null;
+  }
+});
+
+// ✅ IPC: Resim baytlarını al ve user-images klasörüne yaz (path olmadan)
+ipcMain.handle('copy-image-buffer', async (event, payload) => {
+  try {
+    if (!payload || !payload.name || !payload.data) return null;
+    const { name, data } = payload;
+    const publicImagesPath = path.join(__dirname, '..', 'public', 'user-images');
+    if (!fs.existsSync(publicImagesPath)) {
+      fs.mkdirSync(publicImagesPath, { recursive: true });
+    }
+    const ext = path.extname(name) || '';
+    const base = path.basename(name, ext);
+    let fileName = `${base}${ext}`;
+    let destPath = path.join(publicImagesPath, fileName);
+    if (fs.existsSync(destPath)) {
+      const stamp = Date.now();
+      fileName = `${base}-${stamp}${ext}`;
+      destPath = path.join(publicImagesPath, fileName);
+    }
+    const buffer = Buffer.from(new Uint8Array(data));
+    fs.writeFileSync(destPath, buffer);
+    return `/user-images/${fileName}`;
+  } catch (err) {
+    console.error('copy-image-buffer error:', err);
+    return null;
+  }
+});
+
 ipcMain.on('window:minimize', () => mainWindow.minimize());
 ipcMain.on('window:maximize', () => {
   mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize();

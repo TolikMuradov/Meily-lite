@@ -1,3 +1,8 @@
+:root {
+  --content-font-size: 14px;
+  --content-line-height: 1.6;
+}
+
 .editor-panel-container {
   display: flex;
   flex-direction: column;
@@ -27,6 +32,8 @@
   height: 100%;
   width: 100%;
   background: transparent !important;
+  font-size: var(--content-font-size) !important;
+  line-height: var(--content-line-height) !important;
 }
 
 .cm-scroller {
@@ -56,6 +63,8 @@
   overflow-wrap: anywhere !important;
   width: 100% !important;
   box-sizing: border-box !important;
+  font-size: var(--content-font-size) !important;
+  line-height: var(--content-line-height) !important;
 }
 
 
@@ -78,52 +87,10 @@
 .markdown-preview {
   padding: 16px;
   overflow: auto;
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: var(--content-font-size);
+  line-height: var(--content-line-height);
   color: var(--text);
   background: transparent !important;
-}
-
-.markdown-preview pre { 
-  color: var(--text); 
-  border-radius: 6px;
-  padding: 12px;
-  overflow-x: auto;
-  position: relative; /* Copy butonu için gerekli */
-}
-
- .btnbg{
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  display: flex;
-  justify-content: flex-end;
-  padding: 20px;
-  color: var(--text);
-  z-index: 10;
-}
-
-.markdown-preview pre .copy-button {
-  background: var(--bg-button);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.markdown-preview pre .copy-button:hover {
-  background: var(--bg-hover);
-}
-
-.markdown-preview pre .mermaid{
-  background:transparent;
-  border-radius: 6px;
-  padding: 12px;
-  margin-top: 8px;
 }
 
 
@@ -202,13 +169,34 @@
   height: 1.6em;
 }
 
-.markdown-preview pre.language-mermaid {
-  background: transparent !important;
+/* Floating view mode switcher */
+.view-mode-switcher {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  background: var(--bg-panel, rgba(0,0,0,0.5));
+  border: 1px solid var(--border, rgba(255,255,255,0.1));
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  z-index: 1000;
+  backdrop-filter: blur(8px);
 }
-
-.markdown-preview pre.language-mermaid code {
-  background: transparent !important;
+.view-mode-switcher button {
+  background: transparent;
+  border: none;
+  color: var(--text, #fff);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.05s ease;
 }
-
-
-
+.view-mode-switcher button:hover { background: var(--bg-hover, rgba(255,255,255,0.08)); }
+.view-mode-switcher button:active { transform: scale(0.96); }
+.view-mode-switcher button.active { background: var(--primary, #5b9cf2); color: #fff; }

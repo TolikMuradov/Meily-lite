@@ -60,6 +60,24 @@ export default function TagsInput({ tags, setTags }) {
         setHighlightedIndex(null);
       }
     }
+
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      if (highlightedIndex === null && tags.length > 0) {
+        setHighlightedIndex(tags.length - 1);
+      } else if (highlightedIndex !== null && highlightedIndex > 0) {
+        setHighlightedIndex(highlightedIndex - 1);
+      }
+    }
+
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      if (highlightedIndex !== null && highlightedIndex < tags.length - 1) {
+        setHighlightedIndex(highlightedIndex + 1);
+      } else {
+        setHighlightedIndex(null);
+      }
+    }
   };
 
   const removeTag = async (tagId) => {
@@ -108,7 +126,7 @@ export default function TagsInput({ tags, setTags }) {
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Etiket ekle..."
+        placeholder="Add tag..."
       />
 
       {contextMenuInfo && (

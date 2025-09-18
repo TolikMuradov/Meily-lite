@@ -11,7 +11,7 @@ import ModalManager from './components/App/ModalManager';
 import FilterManager from './components/App/FilterManager';
 import AutosaveManager from './components/App/AutosaveManager';
 import ThemeManager from './components/App/ThemeManager';
-import NoteStatsManager from './components/App/NoteStatsManager';
+import calculateNoteStats from './components/App/NoteStatsManager';
 import NoteActionsManager from './components/App/NoteActionsManager';
 import MarkdownManager from './components/App/MarkdownManager';
 import {
@@ -20,14 +20,22 @@ import {
   updateCategory, deleteCategory, permanentlyDeleteNote,
 } from './api';
 import useGlobalShortcutsGuard from './hooks/useGlobalShortcutsGuard';
+import ViewModeSwitcher from './components/ViewModeSwitcher';
 
 export default function App() {
 
   window.addEventListener("editor-scroll", (e) => {
-    console.log("📥 Global scroll event geldi:", e.detail);
-  });
+     console.log("📥 Global scroll event geldi:", e.detail);
+ });
   
-  
+  const autosaveRef = useRef(
+    debounce((note) => {
+      if (!note.category) return;
+      updateNote(note.id, note)
+        .then(saved => setNotes(prev => prev.map(n => n.id === saved.id ? saved : n)))
+        .catch(err => console.error("Autosave hatası:", err));
+    }, 1000)
+  );
   const editorRef = useRef(null);
   const previewRef = useRef(null);
 
@@ -57,6 +65,7 @@ export default function App() {
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [linkText, setLinkText] = useState('');
   const [linkHref, setLinkHref] = useState('');
+  const [viewMode, setViewMode] = useState('both'); // 'editor' | 'preview' | 'both
   
   const defaultCategory = categories.find(c => c.is_default);
 
@@ -224,7 +233,7 @@ export default function App() {
     }
   }, [noteTags]);
 
-  const noteStats = NoteStatsManager({ notes, categories });
+  const noteStats = calculateNoteStats(notes, categories);
 
   const { handleAddNote, handleUpdateNote } = NoteActionsManager({
     notes,
@@ -323,6 +332,18 @@ export default function App() {
     setIsLinkModalOpen(true);
   };
 
+  const handleLinkSubmit = ({ text, href }) => {
+  const view = editorRef.current;
+  if (!view) return;
+  const { state, dispatch } = view;
+  const sel = state.selection.main;
+  const selectedText = (text && text.trim()) || state.sliceDoc(sel.from, sel.to) || 'link';
+  const safeHref = (href && href.trim()) || '#';
+  const insert = `[${selectedText}](${safeHref})`;
+  dispatch({ changes: { from: sel.from, to: sel.to, insert }, selection: { anchor: sel.from + insert.length } });
+  view.focus();
+  };
+
   useEffect(() => {
     const handleScroll = (e) => {
       const ratio = e.detail;
@@ -385,7 +406,7 @@ export default function App() {
         notes={filteredNotes}
         selectedNote={selectedNote}
         onSelectNote={setSelectedNote}
-        onAddNote={handleAddNote}
+        onAddNote={handleAddNote} // Reconnect the create note functionality
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         noteFilter={noteFilter}
@@ -447,14 +468,19 @@ export default function App() {
           />
 
               <div className="editor-preview-container">
-              <MarkdownEditor
-                content={content}
-                setContent={handleChangeContent}
-                editorRef={editorRef}
-              />
+              {viewMode !== 'preview' && (
+                <MarkdownEditor
+                  content={content}
+                  setContent={handleChangeContent}
+                  editorRef={editorRef}
+                />
+              )}
+              {viewMode !== 'editor' && (
                 <Preview content={content} ref={previewRef} />
+              )}
               </div>
 
+              <ViewModeSwitcher mode={viewMode} onChange={setViewMode} />
         </div>
       ) : (
         <div className="no-notes-placeholder">
@@ -467,14 +493,16 @@ export default function App() {
         isModalOpen={isModalOpen}
         modalTitle={modalTitle}
         modalDefaultValue={modalDefaultValue}
-        onModalSubmit={onModalSubmit}
+        onModalSubmit={onModalSubmit} // keeps your existing flows (rename/create)
         setIsModalOpen={setIsModalOpen}
         isLinkModalOpen={isLinkModalOpen}
         linkText={linkText}
         setLinkText={setLinkText}
         linkHref={linkHref}
         setLinkHref={setLinkHref}
-      />
+        setIsLinkModalOpen={setIsLinkModalOpen}
+        onLinkSubmit={handleLinkSubmit} // <-- IMPORTANT for link modal
+        />
 
 
       {showContextMenu && contextCategory && (

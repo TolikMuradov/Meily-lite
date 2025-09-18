@@ -76,7 +76,7 @@ export default function NotesList({
 
         <div className="title">{filterTitle}</div>
         <div className="right-icons">
-          <button onClick={onAddNote} className="icon-btn">
+          <button onClick={() => { console.log('Create Note button clicked'); onAddNote(); }} className="icon-btn">
             <FiEdit size={16} />
           </button>
         </div>
