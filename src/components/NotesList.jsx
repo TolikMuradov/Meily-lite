@@ -109,6 +109,10 @@ export default function NotesList({
               doneTasks = taskMatches.filter(l => /\[(x|X)\]/.test(l)).length;
             }
             const percent = totalTasks ? Math.round((doneTasks / totalTasks) * 100) : 0;
+            // Progress color thresholds: <30 warning (amber/yellow), 30-80 info (primary/blue), >80 success (green)
+            let progressColor = 'var(--yellow, #e0af68)';
+            if (percent >= 80) progressColor = 'var(--success)';
+            else if (percent >= 30) progressColor = 'var(--primary)';
           return (
           <div
             key={note.id}
@@ -143,14 +147,14 @@ export default function NotesList({
 
                {/* Task progress (if any tasks) */}
             {totalTasks > 0 && (
-              <div className="note-task-progress" style={{ margin: '4px 0 6px', maxWidth: '70px' }}>
+              <div className="note-task-progress" style={{ margin: '4px 0 6px', maxWidth: '70px' }} title={`Tasks ${doneTasks}/${totalTasks} (${percent}%)`}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 8, marginBottom: 2, opacity: .75 }}>
                   <span>{doneTasks}/{totalTasks}</span>
                   <span>{percent}%</span>
                 </div>
-                <div style={{ position: 'relative', height: 6, background: 'var(--border, #333)', borderRadius: 4, overflow: 'hidden', height: 3 }}>
+                <div style={{ position: 'relative', background: 'var(--border, #333)', borderRadius: 4, overflow: 'hidden', height: 4 }} aria-label="task-progress" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100}>
                   <div style={{ position: 'absolute', inset: 0, background: 'var(--bg-panel, #222)' }} />
-                  <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: `${percent}%`, background: 'var(--success)', transition: 'width .25s' }} />
+                  <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: `${percent}%`, background: progressColor, transition: 'width .25s, background-color .25s' }} />
                 </div>
               </div>
             )}
