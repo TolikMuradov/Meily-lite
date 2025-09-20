@@ -75,6 +75,7 @@
   margin: 0;
   max-width: 100%;
   overflow: hidden;
+  line-clamp: 2;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -87,6 +88,7 @@
   margin: 0;
   max-width: 100%;
   overflow: hidden;
+  line-clamp: 2;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -120,7 +122,46 @@
   margin-right: 6px;
   font-size: 0.7rem;
   display: inline-block;
-  border: 1px solid currentColor;
+  border: 0;
+}
+
+/* === Tag Quick Color Palette === */
+.tag-wrapper-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 6px;
+  margin-bottom: 4px;
+}
+
+.tag-quick-colors {
+  display: inline-flex;
+  gap: 2px;
+  animation: tagPaletteFade 120ms ease;
+}
+
+.tag-color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, outline 0.15s ease;
+  box-shadow: none;
+  outline: 0;
+}
+.tag-color-dot:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 2px var(--bg-panel), 0 0 0 3px var(--border);
+}
+.tag-color-dot:active {
+  transform: scale(0.9);
+  box-shadow: 0 0 0 2px var(--bg-panel), 0 0 0 3px var(--primary);
+}
+
+@keyframes tagPaletteFade {
+  from { opacity: 0; transform: translateY(-2px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* === Arama / Başlık Paneli === */

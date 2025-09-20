@@ -13,11 +13,11 @@ export default function CategorySelectModal({ isOpen, onClose, categories, onSel
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <h3>Kategori Seç</h3>
+  <h3>Select Category</h3>
         <input
           type="text"
           className="input"
-          placeholder="Kategori ara..."
+          placeholder="Search category..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           autoFocus
@@ -37,7 +37,7 @@ export default function CategorySelectModal({ isOpen, onClose, categories, onSel
           ))}
         </div>
         <div className="modal-buttons">
-          <button className="btn" onClick={onClose}>İptal</button>
+          <button className="btn" onClick={onClose}>Cancel</button>
         </div>
       </div>
     </div>

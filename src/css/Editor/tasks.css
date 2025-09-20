@@ -1,0 +1,17 @@
+/* Task list custom checkbox styles */
+.markdown-preview li.task-list-item .task-checkbox:focus {
+  outline: 2px solid var(--primary, #5b9cf2);
+  outline-offset: 2px;
+}
+.markdown-preview li.task-list-item .task-checkbox:hover {
+  border-color: var(--primary, #5b9cf2);
+}
+
+.markdown-preview li.task-list-item[data-task] {
+  cursor: pointer;
+}
+
+/* Defensive: hide any native checkbox that might slip through */
+.markdown-preview li.task-list-item input[type=checkbox] {
+  display: none !important;
+}

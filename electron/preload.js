@@ -10,6 +10,9 @@ contextBridge.exposeInMainWorld('api', {
   copyImageBuffer: (name, arrayBuffer) => ipcRenderer.invoke('copy-image-buffer', { name, data: arrayBuffer }),
   minimize: () => ipcRenderer.send('window:minimize'),
   maximize: () => ipcRenderer.send('window:maximize'),
+  toggleMaximize: () => ipcRenderer.send('window:maximize'),
+  isMaximized: () => ipcRenderer.invoke('window:isMaximized'),
+  onWindowMaximized: (callback) => ipcRenderer.on('window-maximized', (_, value) => callback(value)),
   close: () => ipcRenderer.send('window:close'),
   onTransparentToggle: (callback) =>
     ipcRenderer.on('transparent-mode', (_, value) => callback(value)),

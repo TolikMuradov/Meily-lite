@@ -33,7 +33,7 @@ export const createNote = async (note) => {
     });
     const data = await res.json();
     if (!res.ok) {
-      console.error("❌ Not oluşturulamadı:", data);
+  console.error("❌ Note could not be created:", data);
       throw new Error("Create note failed");
     }
     return data;

@@ -4,11 +4,13 @@
   "version": "0.0.0",
   "main": "electron/main.js",
   "scripts": {
-    "dev": "vite",
+    "dev:renderer": "vite",
+  "dev:electron": "wait-on tcp:5173 && npx electronmon . --trace-warnings",
+    "dev": "concurrently -n RENDERER,ELECTRON -c cyan,magenta \"npm:dev:renderer\" \"npm:dev:electron\"",
     "build": "vite build",
     "preview": "vite preview",
     "electron": "wait-on tcp:5173 && electron .",
-    "start": "concurrently \"npm run dev\" \"npm run electron\""
+    "start": "npm run dev"
   },
   "dependencies": {
     "@codemirror/commands": "^6.8.1",
@@ -44,6 +46,7 @@
     "concurrently": "^9.1.2",
     "electron": "^35.1.4",
     "electron-builder": "^26.0.12",
+  "electronmon": "^2.0.3",
     "eslint": "^9.21.0",
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.19",

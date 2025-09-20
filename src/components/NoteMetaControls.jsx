@@ -18,7 +18,7 @@ export default function NoteMetaControls({
   }) {
   const [modalOpen, setModalOpen] = useState(false);
   const selectedCatName =
-    categories.find(c => c.id === parseInt(selectedCategoryId))?.name || 'Kategori Seç';
+    categories.find(c => c.id === parseInt(selectedCategoryId))?.name || 'Select Category';
 
   return (
     <div className="note-meta-controls">

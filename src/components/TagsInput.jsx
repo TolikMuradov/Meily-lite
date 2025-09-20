@@ -3,7 +3,8 @@ import { FiX } from 'react-icons/fi';
 import TagContextMenu from './TagContextMenu';
 import TagSettingsModal from './TagSettingsModal';
 import '../css/TagsInput.css';
-import { fetchTags, createTag, updateTag, deleteTag } from '../api';
+import { storage } from '../storage';
+import useThemeTagColors from '../hooks/useThemeTagColors';
 import { hexToRgba } from './utils';
 
 export default function TagsInput({ tags, setTags }) {
@@ -12,11 +13,24 @@ export default function TagsInput({ tags, setTags }) {
   const [contextMenuInfo, setContextMenuInfo] = useState(null);
   const [editingTag, setEditingTag] = useState(null);
   const [globalTags, setGlobalTags] = useState([]);
+  const [activePaletteTagId, setActivePaletteTagId] = useState(null);
+  const themeColors = useThemeTagColors();
+
+  // Dış tıklama kapatma
+  useEffect(() => {
+    const handler = (e) => {
+      if (!e.target.closest('.tag-wrapper-inline')) {
+        setActivePaletteTagId(null);
+      }
+    };
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, []);
 
   useEffect(() => {
-    fetchTags()
+    storage.getTags()
       .then(data => setGlobalTags(data))
-      .catch(err => console.error('Tag listesi alınamadı:', err));
+  .catch(err => console.error('Failed to fetch tag list:', err));
   }, []);
 
   const addTag = async (name) => {
@@ -29,10 +43,11 @@ export default function TagsInput({ tags, setTags }) {
     let existingTag = globalTags.find(t => t.name.toLowerCase() === cleaned);
     if (!existingTag) {
       try {
-        existingTag = await createTag({ name: cleaned, color: '#E45826' });
+        existingTag = await storage.createTag({ name: cleaned, color: '#E45826' });
+        if (!existingTag) return;
         setGlobalTags(prev => [...prev, existingTag]);
       } catch (e) {
-        console.error('Tag oluşturulamadı:', e);
+  console.error('Tag could not be created:', e);
         return;
       }
     }
@@ -86,7 +101,7 @@ export default function TagsInput({ tags, setTags }) {
 
   const handleUpdateTag = async (oldTag, newName, newColor) => {
     try {
-      const updated = await updateTag(oldTag.id, { name: newName, color: newColor });
+  const updated = await storage.updateTag(oldTag.id, { name: newName, color: newColor });
       setTags(prev =>
         prev.map(tag => tag.id === oldTag.id ? updated : tag)
       );
@@ -94,29 +109,63 @@ export default function TagsInput({ tags, setTags }) {
         prev.map(tag => tag.id === oldTag.id ? updated : tag)
       );
     } catch (err) {
-      console.error('Tag güncellenemedi:', err);
+  console.error('Tag could not be updated:', err);
+    }
+  };
+
+  const quickColors = themeColors.length ? themeColors : ['#E45826', '#0FA3B1', '#6366F1', '#16A34A', '#F59E0B', '#EC4899', '#64748B'];
+  useEffect(() => {
+    const esc = (e) => { if (e.key === 'Escape') setActivePaletteTagId(null); };
+    window.addEventListener('keydown', esc);
+    return () => window.removeEventListener('keydown', esc);
+  }, []);
+
+  const applyQuickColor = async (tag, color) => {
+    try {
+      const updated = await storage.updateTag(tag.id, { name: tag.name, color });
+      setTags(prev => prev.map(t => t.id === tag.id ? updated : t));
+      setGlobalTags(prev => prev.map(t => t.id === tag.id ? updated : t));
+    } catch (e) {
+  console.error('Color could not be updated:', e);
     }
   };
 
   return (
     <div className="tags-input-container">
       {tags.map((tag, i) => (
-        <div
-          key={tag.id}
-          className={`tag-item ${highlightedIndex === i ? 'highlighted' : ''} note-tag glow`}
-          style={{
-            backgroundColor: hexToRgba(tag.color, 0.3),
-            color: tag.color,
-            borderColor: tag.color,
-            '--tag-color-shadow': hexToRgba(tag.color, 0.6)
-          }}
-          onContextMenu={(e) => {
-            e.preventDefault();
-            setContextMenuInfo({ x: e.pageX, y: e.pageY, tag });
-          }}
-          
-        >
-          {tag.name}
+        <div key={tag.id} className="tag-wrapper-inline">
+          <div
+            className={`tag-item ${highlightedIndex === i ? 'highlighted' : ''} note-tag glow`}
+            style={{
+              backgroundColor: hexToRgba(tag.color, 0.3),
+              color: tag.color,
+              borderColor: tag.color,
+              '--tag-color-shadow': hexToRgba(tag.color, 0.6)
+            }}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setContextMenuInfo({ x: e.pageX, y: e.pageY, tag });
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setActivePaletteTagId(prev => prev === tag.id ? null : tag.id);
+            }}
+          >
+            {tag.name}
+          </div>
+          {activePaletteTagId === tag.id && (
+            <div className="tag-quick-colors">
+              {quickColors.map(c => (
+                <span
+                  key={c}
+                  className="tag-color-dot"
+                  style={{ backgroundColor: c, outline: c === tag.color ? '2px solid var(--border)' : 'none' }}
+                  onClick={(e) => { e.stopPropagation(); applyQuickColor(tag, c); setActivePaletteTagId(null); }}
+                  title="Change color"
+                />
+              ))}
+            </div>
+          )}
         </div>
       ))}
 

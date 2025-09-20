@@ -82,6 +82,9 @@
   box-sizing: border-box !important;
 }
 
+/* Hide any default CM search panel if accidentally injected */
+.cm-search, .cm-panel.cm-search { display: none !important; }
+
 
 
 .markdown-preview {
@@ -197,6 +200,18 @@
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease, transform 0.05s ease;
 }
-.view-mode-switcher button:hover { background: var(--bg-hover, rgba(255,255,255,0.08)); }
+.view-mode-switcher button:hover { background: var(--bg-panel); }
 .view-mode-switcher button:active { transform: scale(0.96); }
-.view-mode-switcher button.active { background: var(--primary, #5b9cf2); color: #fff; }
+.view-mode-switcher button.active { background: var(--primary); color: var(--text); }
+
+/* Search highlight decorations */
+.cm-search-match {
+  background: rgba(255, 214, 0, 0.35);
+  outline: 1px solid rgba(255, 214, 0, 0.6);
+  border-radius: 2px;
+}
+.cm-search-match-active {
+  background: rgba(88, 140, 255, 0.45);
+  outline: 1px solid rgba(88, 140, 255, 0.9);
+  border-radius: 2px;
+}

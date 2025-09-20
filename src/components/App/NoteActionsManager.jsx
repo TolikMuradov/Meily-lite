@@ -18,14 +18,13 @@ export default function NoteActionsManager({
   const handleAddNote = (categoryId) => {
     console.log('handleAddNote called with categoryId:', categoryId);
     
-    const fallbackCategory = categories.find(c => c.is_default) || categories[0];
-    const resolvedCategoryId = categoryId || fallbackCategory?.id;
+  const resolvedCategoryId = categoryId || null;
     console.log('Resolved categoryId:', resolvedCategoryId);
 
     const newNote = {
       title: 'Yeni Not',
       content: 'write something here ...',
-      category: resolvedCategoryId,
+  category: resolvedCategoryId,
       is_pinned: false,
       is_deleted: false,
       status: 'active',
@@ -42,17 +41,17 @@ export default function NoteActionsManager({
           setTitle(note.title);
           setContent(note.content);
         } else {
-          alert('Not oluşturulamadı.');
+          alert('Note could not be created.');
         }
       })
-      .catch(err => console.error('Not oluşturulamadı:', err));
+  .catch(err => console.error('Note could not be created:', err));
   };
 
   const handleUpdateNote = () => {
     if (!selectedNote?.id) return alert('Güncellemek için not seçmelisin!');
     const updatedNote = {
       ...selectedNote,
-      title: title || "Başlıksız",
+  title: title || "Untitled",
       content: content || "İçerik boş olamaz",
       status: noteStatus,
       tag_ids: noteTags.map(t => t.id)
@@ -63,7 +62,7 @@ export default function NoteActionsManager({
         setNotes(prev => prev.map(n => n.id === saved.id ? saved : n));
         setSelectedNote(saved);
       })
-      .catch(err => console.error('Not güncellenemedi:', err));
+  .catch(err => console.error('Note could not be updated:', err));
   };
 
   return { handleAddNote, handleUpdateNote };

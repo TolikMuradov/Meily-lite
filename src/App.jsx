@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { debounce } from 'lodash';
 import './index.css';
 import './css/Modal.css';
@@ -9,16 +9,16 @@ import Preview from './components/Preview';
 import EditorTop from './components/EditorTop';
 import ModalManager from './components/App/ModalManager';
 import FilterManager from './components/App/FilterManager';
-import AutosaveManager from './components/App/AutosaveManager';
+// AutosaveManager kaldırıldı (useNoteEditing kullanılacak)
+import useNoteEditing from './components/App/hooks/useNoteEditing';
 import ThemeManager from './components/App/ThemeManager';
 import calculateNoteStats from './components/App/NoteStatsManager';
-import NoteActionsManager from './components/App/NoteActionsManager';
+// NoteActionsManager hook formatına dönüştürüldü
+import useNoteActions, { extendNoteActions } from './components/App/hooks/useNoteActions';
 import MarkdownManager from './components/App/MarkdownManager';
-import {
-  fetchCategories, fetchNotes, createNote,
-  updateNote, deleteNote, createCategory,
-  updateCategory, deleteCategory, permanentlyDeleteNote,
-} from './api';
+import useNoteFiltering from './components/App/hooks/useNoteFiltering';
+import useCategories from './components/App/hooks/useCategories';
+import { storage } from './storage';
 import useGlobalShortcutsGuard from './hooks/useGlobalShortcutsGuard';
 import ViewModeSwitcher from './components/ViewModeSwitcher';
 
@@ -40,15 +40,35 @@ export default function App() {
   const previewRef = useRef(null);
 
   const [theme, setTheme] = useState(() => localStorage.getItem('selectedTheme') || 'TokyoNight');
-  const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
   const [notes, setNotes] = useState([]);
-  const [selectedNote, setSelectedNote] = useState(null);
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [noteStatus, setNoteStatus] = useState('active');
-  const [noteTags, setNoteTags] = useState([]);
   const [noteFilter, setNoteFilter] = useState({ type: 'all' });
+  const {
+    categories,
+    setCategories,
+    selectedCategory,
+    setSelectedCategory,
+    contextCategory,
+    setContextCategory,
+    showContextMenu,
+    setShowContextMenu,
+    contextMenuPos,
+    setContextMenuPos,
+    handleAddCategory,
+    handleRenameCategory,
+    handleDeleteCategory,
+  } = useCategories({ setNotes, onInitialFilter: setNoteFilter });
+  const [selectedNote, setSelectedNote] = useState(null);
+  const {
+    title,
+    content,
+    noteStatus,
+    noteTags,
+    setTitle,
+    setContent,
+    setNoteStatus,
+    setNoteTags,
+    updateCategory,
+  } = useNoteEditing({ selectedNote, setNotes, setSelectedNote });
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   useGlobalShortcutsGuard(isModalOpen);
@@ -56,9 +76,6 @@ export default function App() {
   const [modalDefaultValue, setModalDefaultValue] = useState('');
   const [onModalSubmit, setOnModalSubmit] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [contextCategory, setContextCategory] = useState(null);
-  const [showContextMenu, setShowContextMenu] = useState(false);
-  const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
   const [sidebarWidth, setSidebarWidth] = useState(200);
   const [globalTags, setGlobalTags] = useState([]);
   const [sortOption, setSortOption] = useState('updated-desc');
@@ -66,8 +83,8 @@ export default function App() {
   const [linkText, setLinkText] = useState('');
   const [linkHref, setLinkHref] = useState('');
   const [viewMode, setViewMode] = useState('both'); // 'editor' | 'preview' | 'both
+  const [isMaximized, setIsMaximized] = useState(false);
   
-  const defaultCategory = categories.find(c => c.is_default);
 
   const uniqueTags = [...new Set(notes.flatMap(n => (n.tags || []).map(t => t.name)))];
   const allTags = uniqueTags.map(name => {
@@ -80,38 +97,12 @@ export default function App() {
     };
   });
 
-  const filteredNotes = notes
-  .filter(note => {
-    if (noteFilter.type === 'pinned') return note.is_pinned && !note.is_deleted;
-    if (noteFilter.type === 'trash') return note.is_deleted;
-    if (noteFilter.type === 'category') return note.category === noteFilter.id && !note.is_deleted;
-    if (noteFilter.type === 'status') return note.status === noteFilter.status && !note.is_deleted;
-    if (noteFilter.type === 'tag') return (note.tags || []).some(t => t.name === noteFilter.tag) && !note.is_deleted;
-    return !note.is_deleted;
-  })
-  .filter(note => {
-    if (!searchTerm) return true;
-    return (
-      note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      note.content.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  })
-  .sort((a, b) => {
-    switch (sortOption) {
-      case 'title-asc':
-        return (a.title ?? '').localeCompare(b.title ?? '');
-      case 'title-desc':
-        return (b.title ?? '').localeCompare(a.title ?? '');
-      case 'created-asc':
-        return new Date(a.created_at) - new Date(b.created_at);
-      case 'created-desc':
-        return new Date(b.created_at) - new Date(a.created_at);
-      case 'updated-asc':
-        return new Date(a.updated_at) - new Date(b.updated_at);
-      case 'updated-desc':
-      default:
-        return new Date(b.updated_at) - new Date(a.updated_at);
-    }
+  const { filteredNotes, getFilterTitle } = useNoteFiltering({
+    notes,
+    noteFilter,
+    searchTerm,
+    sortOption,
+    categories
   });
 
 
@@ -123,47 +114,10 @@ export default function App() {
 
     
 
-  const getFilterTitle = () => {
-    if (noteFilter.type === 'pinned') return 'Pinned Notes';
-    if (noteFilter.type === 'trash') return 'Trash';
-    if (noteFilter.type === 'status') return noteFilter.status;
-    if (noteFilter.type === 'category') {
-      const cat = categories.find(c => c.id === noteFilter.id);
-      return cat?.name || 'Not Defteri';
-    }
-    if (noteFilter.type === 'tag') return `#${noteFilter.tag}`;
-    return 'All Notes';
-  };
 
-  const restoreNote = (note) => {
-    const restored = {
-      ...note,
-      is_deleted: false,
-      tag_ids: (note.tags || []).map(t => t.id),
-    };
+  // Restore işlemi artık handleRestore üzerinden yönetiliyor
   
-    updateNote(note.id, restored)
-      .then((updated) => {
-        if (!updated?.id) {
-          console.error("Backend geçersiz veri döndürdü.");
-          return;
-        }
-        setNotes(prev => prev.map(n => n.id === updated.id ? updated : n));
-      })
-      .catch(err => {
-        console.error("Geri alma API hatası:", err);
-      });
-  };
-  
-  const permanentlyDelete = (id) => {
-    if (!confirm("Bu not kalıcı olarak silinecek. Emin misiniz?")) return;
-    permanentlyDeleteNote(id).then(() => {
-      setNotes(prev => prev.filter(n => n.id !== id));
-    }).catch(err => {
-      console.error("❌ Kalıcı silme hatası:", err);
-      alert("Not kalıcı olarak silinemedi.");
-    });
-  };
+  // permanentlyDelete artık hook içinde (handlePermanentDelete)
 
   useEffect(() => {
     const transparent = localStorage.getItem('transparentMode') === 'true';
@@ -180,62 +134,27 @@ export default function App() {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
+  // Track maximize state from main process
   useEffect(() => {
-    Promise.all([fetchCategories(), fetchNotes()])
-      .then(([cats, allNotes]) => {
-        setCategories(cats);
-        setNotes(allNotes);
+    if (window.api && window.api.onWindowMaximized) {
+      window.api.onWindowMaximized((val) => setIsMaximized(val));
+    }
+  }, []);
 
-        const def = cats.find(c => c.is_default);
-        if (def) {
-          setSelectedCategory(def);
-          setNoteFilter({ type: 'category', id: def.id });
-        } else {
-          setSelectedCategory(cats[0] || null);
-        }
-      })
+  useEffect(() => {
+    storage.getNotes()
+      .then(allNotes => setNotes(allNotes))
       .catch(err => {
-        console.error("Veriler alınamadı:", err);
-        // Set empty arrays to prevent further errors
-        setCategories([]);
+        console.error('Notlar alınamadı:', err);
         setNotes([]);
       });
   }, []);
 
-  useEffect(() => {
-    if (selectedNote) {
-      setTitle(selectedNote.title);
-      setContent((prev) => {
-        if (prev !== selectedNote.content) {
-          return selectedNote.content;
-        }
-        return prev;
-      });
-      setNoteStatus(selectedNote.status);
-      setNoteTags(selectedNote.tags || []);
-    } else {
-      setTitle('');
-      setContent('');
-      setNoteStatus('active');
-      setNoteTags([]);
-    }
-  }, [selectedNote]);
+  // selectedNote senkronizasyonu ve autosave artık useNoteEditing içinde yönetiliyor
 
-  useEffect(() => {
-    if (selectedNote?.id) {
-      autosaveRef.current({
-        ...selectedNote,
-        title,
-        content,
-        status: noteStatus,
-        tag_ids: noteTags.map(t => t.id),
-      });
-    }
-  }, [noteTags]);
+  const noteStats = useMemo(() => calculateNoteStats(notes, categories), [notes, categories]);
 
-  const noteStats = calculateNoteStats(notes, categories);
-
-  const { handleAddNote, handleUpdateNote } = NoteActionsManager({
+  const baseActions = useNoteActions({
     notes,
     setNotes,
     selectedNote,
@@ -246,25 +165,26 @@ export default function App() {
     setContent,
     noteStatus,
     noteTags,
-    setNoteFilter,
-    setSelectedCategory,
     categories
   });
+  const {
+    handleAddNote,
+    handleUpdateNote,
+    handleSoftDelete,
+    handleRestore,
+    handlePermanentDelete,
+    handleTogglePin,
+    handleExport,
+  } = extendNoteActions(baseActions, {
+    selectedNote,
+    setSelectedNote,
+    setNotes,
+    title,
+    content,
+    noteTags,
+  });
 
-  const handleDeleteNote = () => {
-    if (!selectedNote || !confirm("trush stediğinize emin misiniz?")) return;
-  
-    const updatedNote = {
-      ...selectedNote,
-      is_deleted: true,
-      tag_ids: (selectedNote.tags || []).map(t => t.id),
-    };
-  
-    updateNote(selectedNote.id, updatedNote).then(() => {
-      setNotes(prev => prev.map(n => n.id === selectedNote.id ? updatedNote : n));
-      setSelectedNote(null);
-    });
-  };
+  // handleDeleteNote yerine handleSoftDelete kullanılıyor
 
   const openModal = (title, defaultValue, onSubmit) => {
     setModalTitle(title);
@@ -273,33 +193,31 @@ export default function App() {
     setIsModalOpen(true);
   };
 
-  const handleAddCategory = () => {
-    openModal('Yeni Kategori Ekle', '', name => {
-      createCategory({ name }).then(newCategory => {
-        setCategories(prev => [...prev, newCategory]);
-        if (!selectedCategory) setSelectedCategory(newCategory);
+  const openNewCategoryModal = () => {
+    openModal('Create Notebook', '', name => {
+      handleAddCategory(name).catch(err => {
+        console.error('Notebook does not created:', err);
+        alert('Notebook does not created');
       });
     });
   };
 
-  const handleUpdateCategory = (category, newName) => {
-    updateCategory(category.id, { ...category, name: newName })
-      .then(updatedCategory => {
-        setCategories(categories.map(cat => cat.id === updatedCategory.id ? updatedCategory : cat));
-        setSelectedCategory(updatedCategory);
-      })
-      .catch(err => {
-        console.error("Kategori güncellenemedi:", err);
-        alert("Kategori güncellenemedi!");
+  const openRenameCategoryModal = (category) => {
+    openModal('Rename Notebook', category.name, (newName) => {
+      handleRenameCategory(category, newName).catch(err => {
+        console.error('Notebook does not renamed:', err);
+        alert('Notebook does not renamed');
       });
+    });
   };
 
-  const handleDeleteCategory = (category) => {
+  const safeDeleteCategory = (category) => {
     if (!confirm(`"${category.name}" silinsin mi?`)) return;
-    deleteCategory(category.id).then(() => {
-      setCategories(categories.filter(c => c.id !== category.id));
-      setSelectedCategory(null);
-      setNotes(notes.filter(n => n.category !== category.id));
+    handleDeleteCategory(category).then(() => {
+      setNotes(prev => prev.filter(n => n.category !== category.id));
+    }).catch(err => {
+  console.error('Category could not be deleted:', err);
+  alert('Category could not be deleted');
     });
   };
 
@@ -308,13 +226,7 @@ export default function App() {
     editorRef
   });
 
-  const handleExportNote = async () => {
-    if (!selectedNote) return;
-    if (window.api && window.api.exportNote) {
-      const exported = await window.api.exportNote({ title, content });
-      if (exported) alert('📄 Not başarıyla dışa aktarıldı!');
-    }
-  };
+  // Export işlemi handleExport içinde
 
 
 
@@ -364,23 +276,16 @@ export default function App() {
   
   
 
-  const { handleChangeTitle, handleChangeContent } = AutosaveManager({
-    selectedNote,
-    title,
-    content,
-    noteStatus,
-    noteTags,
-    setNotes,
-    setTitle,
-    setContent
-  });
+  // AutosaveManager kaldırıldı
 
   return (
     <div className="app-container">
       <div className='drag-bar'></div>
       <div className="window-controls">
         <button className='minimize' onClick={() => window.api && window.api.minimize()}>–</button>
-        <button className='maximize' onClick={() => window.api && window.api.maximize()}>◻</button>
+        <button className='maximize' title={isMaximized ? 'Restore' : 'Maximize'} onClick={() => { if (window.api) { console.log('[renderer] maximize button click. isMaximized=', isMaximized); window.api.maximize(); } }}>
+          {isMaximized ? '🗗' : '◻'}
+        </button>
         <button className='close' onClick={() => window.api && window.api.close()}>×</button>
       </div>
 
@@ -388,15 +293,15 @@ export default function App() {
         categories={categories}
         selectedCategory={selectedCategory}
         onSelectCategory={setSelectedCategory}
-        onAddCategory={handleAddCategory}
-        onUpdateCategory={handleUpdateCategory}
-        onDeleteCategory={handleDeleteCategory}
+  onAddCategory={openNewCategoryModal}
+  onUpdateCategory={handleRenameCategory}
+  onDeleteCategory={safeDeleteCategory}
         setNoteFilter={setNoteFilter}
         noteStats={noteStats}
         setContextCategory={setContextCategory}
         setContextMenuPos={setContextMenuPos}
         setShowContextMenu={setShowContextMenu}
-        handleAddCategory={handleAddCategory}
+  handleAddCategory={openNewCategoryModal}
         width={sidebarWidth}
         tagsList={allTags}
         noteFilter={noteFilter}
@@ -406,13 +311,14 @@ export default function App() {
         notes={filteredNotes}
         selectedNote={selectedNote}
         onSelectNote={setSelectedNote}
-        onAddNote={handleAddNote} // Reconnect the create note functionality
+        onAddNote={handleAddNote} // create note with selected category
+        selectedCategoryId={selectedCategory?.id || null}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         noteFilter={noteFilter}
         filterTitle={getFilterTitle()}
-        restoreNote={restoreNote}
-        permanentlyDelete={permanentlyDelete}
+  restoreNote={handleRestore}
+  permanentlyDelete={handlePermanentDelete}
         sortOption={sortOption}
         setSortOption={setSortOption}
       />
@@ -421,62 +327,52 @@ export default function App() {
         <div className="editor-panel-container">
           <EditorTop
             title={title}
-            setTitle={handleChangeTitle}
+            setTitle={setTitle}
             onInsertMarkdown={insertMarkdownAtCursor}
             onSave={handleUpdateNote}
-            onDelete={handleDeleteNote}
-            onExport={handleExportNote}
+            onDelete={handleSoftDelete}
+            onExport={handleExport}
             onLinkClick={handleLinkClick}
             categories={categories}
             selectedCategoryId={selectedNote?.category || selectedCategoryId}
             setSelectedCategoryId={(id) => {
               setSelectedCategoryId(id);
-              if (selectedNote) {
-                const updated = { ...selectedNote, category: parseInt(id) };
-                setSelectedNote(updated);
-                autosaveRef.current(updated);
-              }
+              updateCategory(id);
             }}
             noteStatus={noteStatus}
-            setNoteStatus={(status) => {
-              setNoteStatus(status);
-              if (selectedNote) {
-                const updated = { ...selectedNote, status };
-                setSelectedNote(updated);
-                autosaveRef.current(updated);
-              }
-            }}
+            setNoteStatus={setNoteStatus}
             noteTags={noteTags}
             setNoteTags={setNoteTags}
 
             note={selectedNote}
-            onTogglePin={() => {
-              if (!selectedNote) return;
-              const updated = {
-                ...selectedNote,
-                is_pinned: !selectedNote.is_pinned,
-                tag_ids: (selectedNote.tags || []).map(t => t.id),
-              };
-          
-              setSelectedNote(updated);
-              setNotes(prev => prev.map(n => n.id === updated.id ? updated : n));
-          
-              updateNote(updated.id, updated)
-                .catch(err => console.error('📌 Pin güncelleme hatası:', err));
-            
-  }}
+            onTogglePin={handleTogglePin}
           />
 
               <div className="editor-preview-container">
               {viewMode !== 'preview' && (
                 <MarkdownEditor
                   content={content}
-                  setContent={handleChangeContent}
+                  setContent={setContent}
                   editorRef={editorRef}
                 />
               )}
               {viewMode !== 'editor' && (
-                <Preview content={content} ref={previewRef} />
+                <Preview
+                  content={content}
+                  ref={previewRef}
+                  onToggleTask={(lineIndex, checked) => {
+                    // Update the markdown line at lineIndex replacing - [ ] / - [x]
+                    const lines = content.split(/\n/);
+                    if (lineIndex < 0 || lineIndex >= lines.length) return;
+                    const line = lines[lineIndex];
+                    const replaced = line.replace(/(^\s*[-*+]\s*\[)( |x|X)(\])/, `$1${checked ? 'x' : ' '}$3`);
+                    if (replaced !== line) {
+                      lines[lineIndex] = replaced;
+                      const next = lines.join('\n');
+                      setContent(next);
+                    }
+                  }}
+                />
               )}
               </div>
 
@@ -511,35 +407,24 @@ export default function App() {
           style={{ top: contextMenuPos.y, left: contextMenuPos.x }}
           onMouseLeave={() => setShowContextMenu(false)}
         >
-          {!contextCategory.is_default && (
-            <>
-              <div
-                className="context-menu-item"
-                onClick={() => {
-                  setShowContextMenu(false);
-                  openModal("Kategori Adını Değiştir", contextCategory.name, (newName) => {
-                    handleUpdateCategory({ ...contextCategory }, newName);
-                  });
-                }}
-              >
-                Rename
-              </div>
-              <div
-                className="context-menu-item"
-                onClick={() => {
-                  setShowContextMenu(false);
-                  handleDeleteCategory(contextCategory);
-                }}
-              >
-                Delete
-              </div>
-            </>
-          )}
-          {contextCategory.is_default && (
-            <div className="context-menu-item disabled" style={{ color: 'var(--text-muted)' }}>
-              Sistem kategorisi
-            </div>
-          )}
+          <div
+            className="context-menu-item"
+            onClick={() => {
+              setShowContextMenu(false);
+              openRenameCategoryModal({ ...contextCategory });
+            }}
+          >
+            Rename
+          </div>
+          <div
+            className="context-menu-item"
+            onClick={() => {
+              setShowContextMenu(false);
+              safeDeleteCategory(contextCategory);
+            }}
+          >
+            Delete
+          </div>
         </div>
       )}
 

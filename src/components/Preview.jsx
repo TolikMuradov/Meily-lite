@@ -1,5 +1,6 @@
 // src/components/Preview.jsx
-import React, { forwardRef, useEffect, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useRef, useState, useMemo } from 'react';
+import { FaCheckCircle, FaExclamationTriangle, FaInfoCircle, FaTimesCircle, FaStickyNote, FaLightbulb, FaBolt, FaExclamationCircle } from 'react-icons/fa';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -16,10 +17,21 @@ import "../css/Editor/katex.css"
 import "../css/Editor/pre.css"
 import "../css/Editor/tables.css"
 import "../css/Editor/blockquote.css"
+import "../css/Editor/tasks.css"
 
-const Preview = forwardRef(({ content }, ref) => {
+const Preview = forwardRef(({ content, onToggleTask }, ref) => {
   const hostRef = useRef(null);
   const [copiedCode, setCopiedCode] = useState(null);
+  // Pre-scan lines synchronously with useMemo so first paint has data
+  const taskLineMap = useMemo(() => {
+    const map = {};
+    const lines = content.split(/\n/);
+    for (let i = 0; i < lines.length; i++) {
+      const m = /^(\s*[-*+]\s*\[( |x|X)\])/.exec(lines[i]);
+      if (m) map[i] = { checked: /x|X/.test(m[2]) };
+    }
+    return map;
+  }, [content]);
 
   const resolveAssetSrc = (src) => {
     if (!src) return src;
@@ -91,7 +103,7 @@ const Preview = forwardRef(({ content }, ref) => {
     >
       <ReactMarkdown
         children={content}
-        remarkPlugins={[remarkGfm, remarkMath]}
+  remarkPlugins={[[remarkGfm, { taskList: true }], remarkMath]}
         rehypePlugins={[
           rehypeRaw,
           ...(USE_SANITIZE ? [rehypeSanitize] : []),
@@ -99,6 +111,137 @@ const Preview = forwardRef(({ content }, ref) => {
           rehypeHighlight,
         ]}
         components={{
+          // Suppress native GFM checkbox inputs; we render our own.
+          input: ({ node, ...inputProps }) => {
+            if (inputProps.type === 'checkbox') {
+              return null; // hide default checkbox
+            }
+            return <input {...inputProps} />;
+          },
+          li: ({ node, children, ...props }) => {
+            const lineGuess = node?.position?.start?.line ? (node.position.start.line - 1) : -1;
+            const prescanned = lineGuess >= 0 ? taskLineMap[lineGuess] : undefined;
+            const isTask = typeof node?.checked === 'boolean' || !!prescanned;
+            const baseClass = props.className ? props.className + ' ' : '';
+
+            const renderTask = (checked, contentChildren, meta) => {
+              // meta: { line }
+              return (
+                <li
+                  {...props}
+                  data-task
+                  className={baseClass + 'task-list-item'}
+                  style={{ listStyle: 'none', margin: '4px 0', display: 'flex', alignItems: 'flex-start', gap: '8px' }}
+                  onClick={(e) => {
+                    if (!onToggleTask) return;
+                    e.stopPropagation();
+                    onToggleTask(meta.line, !checked);
+                  }}
+                >
+                  <span
+                    className={"task-checkbox" + (checked ? ' checked' : '')}
+                    role="checkbox"
+                    aria-checked={checked}
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === ' ' || e.key === 'Enter') {
+                        e.preventDefault();
+                        onToggleTask?.(meta.line, !checked);
+                      }
+                    }}
+                    style={{
+                      width: 18,
+                      height: 18,
+                      border: '2px solid var(--border, #555)',
+                      borderRadius: 4,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      fontSize: 12,
+                      background: checked ? 'var(--primary, #5b9cf2)' : 'transparent',
+                      color: checked ? '#fff' : 'transparent',
+                      transition: 'background .15s'
+                    }}
+                  >
+                    ✓
+                  </span>
+                  <span style={{ flex: 1, textDecoration: checked ? 'line-through' : 'none', opacity: checked ? 0.7 : 1 }}>{contentChildren}</span>
+                </li>
+              );
+            };
+
+            if (isTask) {
+              // Remove any auto-rendered native checkbox <input> that remark-gfm might have inserted
+              const stripNative = (nodes) => nodes.filter(n => !(React.isValidElement(n) && n.type === 'input'));
+              const flat = React.Children.toArray(children).map((c, i) => {
+                if (React.isValidElement(c) && c.type === 'p') {
+                  const inner = stripNative(React.Children.toArray(c.props.children));
+                  return <React.Fragment key={i}>{inner}</React.Fragment>;
+                }
+                return c;
+              });
+              // Determine line index by finding preceding position info if available (node.position from mdast)
+              const line = lineGuess;
+              const checked = typeof node?.checked === 'boolean' ? node.checked : !!prescanned?.checked;
+              // If fallback (no node.checked) and first text still begins with [ ] remove it
+              if (!node.checked && prescanned) {
+                // Clean leading marker from first string fragment if present
+                if (flat.length) {
+                  const first = flat[0];
+                  if (typeof first === 'string') {
+                    flat[0] = first.replace(/^\[( |x|X)\]\s+/, '');
+                  }
+                }
+              }
+              return renderTask(checked, flat, { line });
+            }
+
+            // Fallback: detect literal "[ ]" or "[x]" at start when GFM didn't mark it
+            const rawChildren = React.Children.toArray(children).filter(c => !(React.isValidElement(c) && c.type === 'input'));
+            if (rawChildren.length) {
+              // If first element is a <p> unwrap its children for inspection
+              let first = rawChildren[0];
+              let inspectNodes = [];
+              if (React.isValidElement(first) && first.type === 'p') {
+                inspectNodes = React.Children.toArray(first.props.children);
+              } else {
+                inspectNodes = [first];
+              }
+              if (inspectNodes.length) {
+                const firstText = inspectNodes
+                  .filter(n => typeof n === 'string')
+                  .join('')
+                  .trimStart();
+                const m = /^(\[( |x|X)\])\s+/.exec(firstText);
+                if (m) {
+                  const isChecked = /x/i.test(m[1]);
+                  // Rebuild content without the leading marker token
+                  let consumed = false;
+                  const rebuilt = inspectNodes.map((n, idx) => {
+                    if (typeof n === 'string') {
+                      if (!consumed) {
+                        consumed = true;
+                        return n.replace(/^(\[( |x|X)\])\s+/, '');
+                      }
+                      return n;
+                    }
+                    return n;
+                  });
+                  const restChildren = [
+                    ...(React.isValidElement(first) && first.type === 'p'
+                      ? [<React.Fragment key="rebuilt">{rebuilt}</React.Fragment>]
+                      : rebuilt),
+                    ...rawChildren.slice(1)
+                  ];
+                  const line = node.position?.start?.line ? (node.position.start.line - 1) : -1;
+                  return renderTask(isChecked, restChildren, { line });
+                }
+              }
+            }
+
+            return <li {...props}>{children}</li>;
+          },
           code({ inline, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
             const lang = match?.[1];
@@ -242,12 +385,19 @@ const Preview = forwardRef(({ content }, ref) => {
           blockquote: ({ children }) => {
             const mapAlias = (k) => {
               const key = (k || '').toLowerCase();
-              if (key === 'info' || key === 'succes') return 'success';
+              if (key === 'succes') return 'success';
+              if (key === 'info') return 'primary'; // legacy mapping
+              if (key === 'note') return 'note';
+              if (key === 'tip') return 'tip';
+              if (key === 'important') return 'important';
+              if (key === 'warning') return 'warning';
+              if (key === 'caution') return 'caution';
               return key;
             };
-            const kinds = new Set(['success', 'warning', 'danger', 'primary']);
+            // Supported variants (GFM alerts + existing)
+            const kinds = new Set(['success', 'warning', 'danger', 'primary', 'note', 'tip', 'important', 'caution']);
             let variant = null;
-            const stripMarkerRegex = /^\s*\[!(success|warning|danger|primary|info|succes)\]\s*/i;
+            const stripMarkerRegex = /^\s*\[!(success|warning|danger|primary|info|succes|note|tip|important|caution)\]\s*/i;
 
             const stripAtStart = (node, atStart = true) => {
               if (!atStart) return [node, false];
@@ -291,7 +441,40 @@ const Preview = forwardRef(({ content }, ref) => {
             });
 
             const cls = variant ? `blockquote-${variant}` : undefined;
-            return <blockquote className={cls}>{transformed}</blockquote>;
+            const variantLabelMap = {
+              success: 'Success',
+              warning: 'Warning',
+              danger: 'Danger',
+              primary: 'Info',
+              note: 'Note',
+              tip: 'Tip',
+              important: 'Important',
+              caution: 'Caution'
+            };
+            const variantIconMap = {
+              success: <FaCheckCircle />,
+              warning: <FaExclamationTriangle />,
+              danger: <FaTimesCircle />,
+              primary: <FaInfoCircle />,
+              note: <FaStickyNote />,
+              tip: <FaLightbulb />,
+              important: <FaBolt />,
+              caution: <FaExclamationCircle />
+            };
+            if (!variant) {
+              return <blockquote className={cls}>{transformed}</blockquote>;
+            }
+            const label = variantLabelMap[variant] || variant;
+            const icon = variantIconMap[variant] || <FaInfoCircle />;
+            return (
+              <blockquote className={cls} data-variant={variant}>
+                <div className="callout-header">
+                  <span className="callout-icon">{icon}</span>
+                  <span className="callout-label">{label}</span>
+                </div>
+                <div className="callout-body">{transformed}</div>
+              </blockquote>
+            );
           },
         }}
       />

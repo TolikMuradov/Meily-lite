@@ -4,11 +4,13 @@ const fs = require('fs');
 
 let mainWindow;
 let settingsWindow;
+// Pseudo maximize state
+let manualMaximized = false;
 
 function createMainWindow() {
   mainWindow = new BrowserWindow({
-    width: 1800,
-    height: 1000,
+    width: 1400,
+    height: 800,
     frame: false, // 🔥 pencere çerçevesini kapatır
     transparent: true, // 🔥 arka planı şeffaf yapar
     backgroundColor: '#00000000', // 🪟 Windows için tam şeffaf
@@ -24,6 +26,11 @@ function createMainWindow() {
   });
 
   mainWindow.loadURL('http://localhost:5173');
+
+  // İlk durum event (manuel state)
+  mainWindow.webContents.on('did-finish-load', () => {
+    if (mainWindow) mainWindow.webContents.send('window-maximized', manualMaximized);
+  });
 }
 
 function createSettingsWindow() {
@@ -166,8 +173,35 @@ ipcMain.handle('copy-image-buffer', async (event, payload) => {
 
 ipcMain.on('window:minimize', () => mainWindow.minimize());
 ipcMain.on('window:maximize', () => {
-  mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize();
+  if (!mainWindow) return;
+  const { screen } = require('electron');
+  const { workArea } = screen.getPrimaryDisplay();
+  if (!manualMaximized) {
+    mainWindow.setBounds({ x: workArea.x, y: workArea.y, width: workArea.width, height: workArea.height });
+    manualMaximized = true;
+    mainWindow.webContents.send('window-maximized', true);
+    console.log('[pseudo-max] expanded to workArea');
+  } else {
+    const targetW = 1400;
+    const targetH = 800;
+    const x = workArea.x + Math.round((workArea.width - targetW) / 2);
+    const y = workArea.y + Math.round((workArea.height - targetH) / 2);
+    mainWindow.setBounds({ x, y, width: targetW, height: targetH });
+    manualMaximized = false;
+    mainWindow.webContents.send('window-maximized', false);
+    console.log('[pseudo-max] restored to 1400x800');
+  }
 });
+// Custom toggle that remembers previous bounds explicitly
+// window:toggleMaximize artık window:maximize ile aynı mantığı kullanabilir
+ipcMain.on('window:toggleMaximize', () => {
+  if (!mainWindow) return;
+  ipcMain.emit('window:maximize');
+});
+// Query current maximize state
+ipcMain.handle('window:isMaximized', () => mainWindow && mainWindow.isMaximized());
+ipcMain.removeHandler && ipcMain.removeHandler('window:isMaximized');
+ipcMain.handle('window:isMaximized', () => manualMaximized);
 ipcMain.on('window:close', () => mainWindow.close());
 
 ipcMain.on('set-transparent', (event, value) => {

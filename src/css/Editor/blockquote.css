@@ -2,9 +2,8 @@
   margin: 1em 0;
   padding: 12px 14px;
   border-left: 4px solid var(--border);
-  background: var(--bg-panel);
-  border-radius: 8px;
   color: var(--text);
+  background: transparent;
 }
 
 .markdown-preview blockquote p {
@@ -15,20 +14,65 @@
 .markdown-preview blockquote.blockquote-success,
 .markdown-preview blockquote.blockquote-info {
   border-left-color: var(--success, #2ecc71);
-  background: rgba(46, 204, 113, 0.12);
 }
 
 .markdown-preview blockquote.blockquote-warning {
   border-left-color: var(--yellow);
-  background: rgba(241, 196, 15, 0.14);
 }
 
 .markdown-preview blockquote.blockquote-danger {
   border-left-color: var(--danger);
-  background: rgba(255, 107, 107, 0.12);
 }
 
 .markdown-preview blockquote.blockquote-primary {
   border-left-color: var(--primary, #5b9cf2);
-  background: rgba(91, 156, 242, 0.16);
 }
+
+/* GFM Alert variants */
+.markdown-preview blockquote.blockquote-note {
+  border-left-color: var(--primary, #5b9cf2);
+}
+.markdown-preview blockquote.blockquote-tip {
+  border-left-color: var(--success, #2ecc71);
+}
+.markdown-preview blockquote.blockquote-important {
+  border-left-color: var(--purple, #9b59b6);
+}
+.markdown-preview blockquote.blockquote-caution {
+  border-left-color: var(--orange, #e67e22);
+}
+
+/* Callout header layout */
+.markdown-preview blockquote .callout-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 0.9em;
+  letter-spacing: .5px;
+}
+.markdown-preview blockquote .callout-icon {
+  font-size: 1em;
+  line-height: 1;
+}
+.markdown-preview blockquote .callout-body > :first-child { margin-top: 0; }
+.markdown-preview blockquote .callout-body > :last-child { margin-bottom: 0; }
+
+/* Variant label & icon colors (scoped per variant) */
+.markdown-preview blockquote.blockquote-success .callout-label,
+.markdown-preview blockquote.blockquote-success .callout-icon { color: var(--success, #2ecc71); }
+.markdown-preview blockquote.blockquote-warning .callout-label,
+.markdown-preview blockquote.blockquote-warning .callout-icon { color: var(--yellow, #f1c40f); }
+.markdown-preview blockquote.blockquote-danger .callout-label,
+.markdown-preview blockquote.blockquote-danger .callout-icon { color: var(--danger, #ff6b6b); }
+.markdown-preview blockquote.blockquote-primary .callout-label,
+.markdown-preview blockquote.blockquote-primary .callout-icon { color: var(--primary, #5b9cf2); }
+.markdown-preview blockquote.blockquote-note .callout-label,
+.markdown-preview blockquote.blockquote-note .callout-icon { color: var(--primary, #5b9cf2); }
+.markdown-preview blockquote.blockquote-tip .callout-label,
+.markdown-preview blockquote.blockquote-tip .callout-icon { color: var(--success, #2ecc71); }
+.markdown-preview blockquote.blockquote-important .callout-label,
+.markdown-preview blockquote.blockquote-important .callout-icon { color: var(--purple, #9b59b6); }
+.markdown-preview blockquote.blockquote-caution .callout-label,
+.markdown-preview blockquote.blockquote-caution .callout-icon { color: var(--orange, #e67e22); }

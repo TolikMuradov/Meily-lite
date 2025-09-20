@@ -7,6 +7,32 @@
     background: transparent;
     border-right: 1px solid var(--border);
   }
+
+  .sidebar-fixed-header {
+    flex: 0 0 auto;
+    position: sticky; /* extra safety if nested */
+    top: 0;
+    z-index: 2;
+    background: var(--bg); /* ensure background covers scroll content */
+  }
+
+  .sidebar-scroll {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+  }
+
+  .sidebar-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  .sidebar-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .sidebar-scroll::-webkit-scrollbar-thumb {
+    background: var(--bg-hover);
+    border-radius: 3px;
+  }
   
   .sidebar-header {
     display: flex;
@@ -76,10 +102,11 @@
   }
   
   .sidebar-footer {
-    margin-top: auto;
+    flex: 0 0 auto;
     padding: 15px;
     font-size: 13px;
     color: var(--text-muted);
+    background: var(--bg); /* keep footer readable over scroll */
   }
   
   .user-info {
@@ -216,3 +243,24 @@
   margin: 4px 0;
 }
 
+
+
+  /* Global scrollbar styles */
+*::-webkit-scrollbar {
+  width: 5px; /* Scrollbar genişliği */
+  height: 5px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--text-muted); /* Scrollbar thumb color */
+  border-radius: 4px; /* Rounded corners */
+  transition: background 0.5s;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--text); /* Darker color on hover */
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent; /* Transparent track */
+}

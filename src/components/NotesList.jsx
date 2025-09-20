@@ -24,6 +24,7 @@ export default function NotesList({
   selectedNote,
   onSelectNote,
   onAddNote,
+  selectedCategoryId,
   searchTerm = '',
   setSearchTerm,
   noteFilter,
@@ -76,7 +77,7 @@ export default function NotesList({
 
         <div className="title">{filterTitle}</div>
         <div className="right-icons">
-          <button onClick={() => { console.log('Create Note button clicked'); onAddNote(); }} className="icon-btn">
+          <button onClick={() => { console.log('Create Note button clicked'); onAddNote(selectedCategoryId || null); }} className="icon-btn">
             <FiEdit size={16} />
           </button>
         </div>
@@ -98,21 +99,33 @@ export default function NotesList({
           <p>No notes found.</p>
         </div>
       ) : (
-        notes.map(note => (
+        notes.map(note => {
+          const contentStr = note.content || '';
+          // Match - [ ] / * [x] etc at line start after optional spaces
+          const taskMatches = contentStr.match(/^[ \t]*[-*+]\s*\[( |x|X)\].*$/gm) || [];
+            let totalTasks = taskMatches.length;
+            let doneTasks = 0;
+            if (totalTasks) {
+              doneTasks = taskMatches.filter(l => /\[(x|X)\]/.test(l)).length;
+            }
+            const percent = totalTasks ? Math.round((doneTasks / totalTasks) * 100) : 0;
+          return (
           <div
             key={note.id}
             className={`note-item ${note.id === selectedNote?.id ? "selected" : ""}`}
             onClick={() => onSelectNote(note)}
           >
-            {/* Başlık ve ikonlar */}
+            {/* Title and icons */}
             <div className="note-header-row">
-              <h5 className="note-title">  {statusIcons[note.status]}  {note.is_pinned && <FiPaperclip className="pinned-icon" />}{note.title ?? 'Başlıksız'}</h5>
+              <h5 className="note-title">  {statusIcons[note.status]}  {note.is_pinned && <FiPaperclip className="pinned-icon" />}{note.title ?? 'Untitled'}</h5>
             </div>
 
             {/* İçerik preview */}
             <p className='note-content'>{(note.content ?? '').slice(0, 40)}...</p>
 
-            {/* Etiketler */}
+           
+
+            {/* Tags */}
             <div className="note-tags">
               {(note.tags || []).map(tag => (
                 <span
@@ -127,6 +140,22 @@ export default function NotesList({
                   #{tag.name}
                 </span>
               ))}
+
+               {/* Task progress (if any tasks) */}
+            {totalTasks > 0 && (
+              <div className="note-task-progress" style={{ margin: '4px 0 6px', maxWidth: '70px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 8, marginBottom: 2, opacity: .75 }}>
+                  <span>{doneTasks}/{totalTasks}</span>
+                  <span>{percent}%</span>
+                </div>
+                <div style={{ position: 'relative', height: 6, background: 'var(--border, #333)', borderRadius: 4, overflow: 'hidden', height: 3 }}>
+                  <div style={{ position: 'absolute', inset: 0, background: 'var(--bg-panel, #222)' }} />
+                  <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: `${percent}%`, background: 'var(--success)', transition: 'width .25s' }} />
+                </div>
+              </div>
+            )}
+
+
               <div className="note-timestamps">
                 <small>Created {dayjs(note.created_at).fromNow()}</small>
                 <small>Updated {dayjs(note.updated_at).fromNow()}</small>
@@ -151,7 +180,7 @@ export default function NotesList({
               </div>
             )}
           </div>
-        ))
+        )})
       )}
     </div>
   );

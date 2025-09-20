@@ -34,17 +34,17 @@ export default function EditorTop({
 }) {
   return (
     <div className="editor-top-container" style={{ padding: '20px', fontSize: '1.2em' }}>
-      {/* 📝 Başlık */}
+  {/* 📝 Title */}
       <input
         type="text"
         className="title-input"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        placeholder="Başlık"
+  placeholder="Title"
         style={{ fontSize: '1.5em', padding: '10px' }}
       />
 
-      {/* 📂 Kategori, Durum, Etiketler */}
+  {/* 📂 Category, Status, Tags */}
       <NoteMetaControls
         categories={categories}
         selectedCategoryId={selectedCategoryId}
@@ -103,7 +103,7 @@ export default function EditorTop({
             </button>
           )}
           <button className="btn" onClick={onSave} style={{ fontSize: '0.8em', padding: '8px 12px' }}>Save</button>
-          <button className="btn" onClick={onDelete} style={{ fontSize: '0.8em', padding: '8px 12px' }}>Delete</button>
+          <button className="btn" onClick={onDelete} style={{ fontSize: '0.8em', padding: '8px 12px' }}>Trash</button>
           <button className="btn" onClick={onExport} style={{ fontSize: '0.8em', padding: '8px 12px' }}>Export</button>
         </div>
       </div>

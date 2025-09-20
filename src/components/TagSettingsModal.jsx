@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import '../css/TagsInput.css';
-import { updateTag } from '../api'; 
+import { storage } from '../storage'; 
 
 const COLOR_NAMES = ['orange', 'teal', 'violet', 'yellow', 'blue', 'green', 'pink', 'gray'];
 
@@ -23,12 +23,12 @@ export default function TagSettingsModal({ tag, onClose, onSave }) {
 
     // 🟡 Eğer tag'de id varsa backend'e PUT gönder
     if (tag.id) {
-      const updated = await updateTag(tag.id, { name: name.trim(), color });
+      const updated = await storage.updateTag(tag.id, { name: name.trim(), color });
       if (updated?.id) {
         onSave(updated.name, updated.color); // frontend’e bildir
         onClose();
       } else {
-        alert('❌ Etiket güncellenemedi');
+  alert('❌ Tag could not be updated');
       }
     } else {
       // Local tag için sadece onSave (örneğin yeni eklenmiş ama kaydedilmemiş)
@@ -64,8 +64,8 @@ export default function TagSettingsModal({ tag, onClose, onSave }) {
         </div>
 
         <div className="tag-modal-buttons">
-          <button className="btn" onClick={handleSave}>Kaydet</button>
-          <button className="btn" onClick={onClose}>İptal</button>
+          <button className="btn" onClick={handleSave}>Save</button>
+          <button className="btn" onClick={onClose}>Cancel</button>
         </div>
       </div>
     </div>
