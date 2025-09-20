@@ -15,6 +15,7 @@ import rehypeKatex from 'rehype-katex';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import Preview from './Preview';
+import { markdownTableEditor } from '../editor/markdownTableEditor';
 
 const SLASH_COMMANDS = [
   { label: 'divider', snippet: '\n---\n' },
@@ -128,6 +129,7 @@ export default function MarkdownEditor({ content, setContent, editorRef, onAutos
 
   const editorExtensions = [
     markdown(),
+    ...markdownTableEditor(),
     foldGutter(),
     highlightActiveLine(),
     indentOnInput(),
