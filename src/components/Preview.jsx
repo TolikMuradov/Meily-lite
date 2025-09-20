@@ -111,6 +111,11 @@ const Preview = forwardRef(({ content, onToggleTask }, ref) => {
           rehypeHighlight,
         ]}
         components={{
+          table: ({ children, ...props }) => (
+            <div className="table-wrapper">
+              <table {...props}>{children}</table>
+            </div>
+          ),
           // Suppress native GFM checkbox inputs; we render our own.
           input: ({ node, ...inputProps }) => {
             if (inputProps.type === 'checkbox') {

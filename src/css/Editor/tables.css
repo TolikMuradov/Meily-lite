@@ -19,3 +19,42 @@
 .markdown-preview tbody tr:nth-child(even) {
   background: color-mix(in srgb, var(--panel, #161a22) 40%, transparent);
 }
+
+/* Responsive wrapper */
+.markdown-preview .table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 8px 0 16px;
+  position: relative;
+}
+
+.markdown-preview .table-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+.markdown-preview .table-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+.markdown-preview .table-wrapper::-webkit-scrollbar-thumb {
+  background: var(--bg-hover, #2e2e2e);
+  border-radius: 4px;
+}
+
+@media (max-width: 720px) {
+  .markdown-preview table {
+    min-width: 600px; /* allow scroll instead of squish */
+    font-size: 0.875rem;
+  }
+}
+
+/* Optional subtle gradient edges to hint scroll */
+.markdown-preview .table-wrapper:before,
+.markdown-preview .table-wrapper:after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  pointer-events: none;
+  transition: opacity .25s;
+}

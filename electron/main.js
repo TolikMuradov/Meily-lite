@@ -9,7 +9,7 @@ let manualMaximized = false;
 
 function createMainWindow() {
   mainWindow = new BrowserWindow({
-    width: 1400,
+    width: 1300,
     height: 800,
     frame: false, // 🔥 pencere çerçevesini kapatır
     transparent: true, // 🔥 arka planı şeffaf yapar
@@ -182,7 +182,7 @@ ipcMain.on('window:maximize', () => {
     mainWindow.webContents.send('window-maximized', true);
     console.log('[pseudo-max] expanded to workArea');
   } else {
-    const targetW = 1400;
+    const targetW = 1300;
     const targetH = 800;
     const x = workArea.x + Math.round((workArea.width - targetW) / 2);
     const y = workArea.y + Math.round((workArea.height - targetH) / 2);

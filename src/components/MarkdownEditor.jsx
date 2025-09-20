@@ -4,18 +4,15 @@ import CodeMirror from '@uiw/react-codemirror';
 import { markdown } from '@codemirror/lang-markdown';
 import { keymap, highlightActiveLine, EditorView, Decoration } from '@codemirror/view';
 import { StateEffect, StateField } from '@codemirror/state';
+import { languageCompartment, keymapCompartment, tableCompartment } from '../editor/compartments';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
-import { indentOnInput, foldGutter } from '@codemirror/language';
+import { indentOnInput, foldGutter, syntaxTree } from '@codemirror/language';
+import { Prec } from '@codemirror/state';
 import '../css/MarkdownEditor.css';
-import { FiEye, FiEyeOff } from 'react-icons/fi';
-import ReactMarkdown from 'react-markdown';
-import rehypeRaw from 'rehype-raw';
-import rehypeHighlight from 'rehype-highlight';
-import rehypeKatex from 'rehype-katex';
-import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import Preview from './Preview';
-import { markdownTableEditor } from '../editor/markdownTableEditor';
+import { formatTable, insertRow, insertColumn, moveCell, alignColumn, tableKernelExtension, handleEnter } from '../editor/tableKernelAdapter';
+import { registerCommand, bootstrapCore, bootstrapTable, buildKeySpecs } from '../commands/registry';
+import CommandPalette from './CommandPalette';
+import ShortcutsModal from './ShortcutsModal';
 
 const SLASH_COMMANDS = [
   { label: 'divider', snippet: '\n---\n' },
@@ -87,6 +84,8 @@ export default function MarkdownEditor({ content, setContent, editorRef, onAutos
   const [outline, setOutline] = useState([]);
   const [showOutline, setShowOutline] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showPalette, setShowPalette] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [replaceValue, setReplaceValue] = useState('');
   const [searchMatches, setSearchMatches] = useState([]);
@@ -127,9 +126,19 @@ export default function MarkdownEditor({ content, setContent, editorRef, onAutos
     }
   };
 
+  // Bootstrap commands once (static init pattern)
+  const [commandsReady, setCommandsReady] = useState(false);
+  useEffect(() => {
+    if (!commandsReady) {
+      bootstrapCore(registerCommand);
+  bootstrapTable(registerCommand, { formatTable, insertRow, insertColumn, moveCell, alignColumn });
+      setCommandsReady(true);
+    }
+  }, [commandsReady]);
+
   const editorExtensions = [
-    markdown(),
-    ...markdownTableEditor(),
+  languageCompartment.of(markdown()),
+    // tableCompartment reserved for future table-specific config (alignment state etc.)
     foldGutter(),
     highlightActiveLine(),
     indentOnInput(),
@@ -199,7 +208,44 @@ export default function MarkdownEditor({ content, setContent, editorRef, onAutos
         return true;
       },
     }),
-    keymap.of([...defaultKeymap, ...historyKeymap])
+    keymapCompartment.of(keymap.of([
+      // Custom command bindings first so they can override defaults (e.g., Tab in tables)
+      ...buildKeySpecs(),
+      ...defaultKeymap,
+      ...historyKeymap
+    ])),
+    // IMPORTANT: table keymap last for highest precedence on Enter/Tab
+    tableKernelExtension(),
+    // High priority hybrid keymap (syntaxTree + existing adapter logic)
+    Prec.highest(keymap.of([
+      {
+        key: 'Enter',
+        run: (view) => {
+          if (handleEnter(view)) return true; // adapter handles skeleton / formatting
+          try {
+            const state = view.state;
+            const pos = state.selection.main.head;
+            const tree = syntaxTree(state);
+            const node = tree.resolve(pos, 1);
+            if (node && /Table(Row|Header)/.test(node.name)) {
+              const line = state.doc.lineAt(pos);
+              const pipeCount = (line.text.match(/\|/g) || []).length - 1;
+              if (pipeCount > 0) {
+                const blank = '|' + (' '.repeat(1) + '|').repeat(pipeCount);
+                view.dispatch({ changes: { from: pos, to: pos, insert: '\n' + blank }, selection: { anchor: pos + 1 + blank.length } });
+                formatTable(view);
+                return true;
+              }
+            }
+          } catch (e) {
+            console.warn('[table.hybrid.enter.error]', e);
+          }
+          return false;
+        }
+      },
+      { key: 'Tab', run: (view) => moveCell(view, 'next') || false },
+      { key: 'Shift-Tab', run: (view) => moveCell(view, 'prev') || false }
+    ]))
   ];
 
   // Outline extraction whenever content changes (basic parse for headings)
@@ -252,10 +298,28 @@ export default function MarkdownEditor({ content, setContent, editorRef, onAutos
           focusSearchElement(searchFocusIndex.current + dir);
         }
       }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        setShowPalette(true);
+        return;
+      }
+      // Ctrl+Shift+/ (help) fallback; registry command will dispatch event too
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === '?' || e.key === '/')) {
+        e.preventDefault();
+        setShowShortcuts(true);
+        return;
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [showSearch]);
+
+  // Listen to registry command event
+  useEffect(() => {
+    const open = () => setShowShortcuts(true);
+    window.addEventListener('open-shortcuts-modal', open);
+    return () => window.removeEventListener('open-shortcuts-modal', open);
+  }, []);
 
   // Compute search matches
   useEffect(() => {
@@ -728,6 +792,8 @@ export default function MarkdownEditor({ content, setContent, editorRef, onAutos
       </button> */}
 
       {/* Preview bileşenini kaldırdım */}
+      <CommandPalette open={showPalette} onClose={()=> setShowPalette(false)} editorRef={editorRef} />
+      <ShortcutsModal open={showShortcuts} onClose={()=> setShowShortcuts(false)} />
     </div>
   );
 }
