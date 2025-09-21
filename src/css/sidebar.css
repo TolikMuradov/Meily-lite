@@ -42,12 +42,15 @@
     font-weight: bold;
     font-size: 18px;
   }
+    .sidebar-header .mac-window-controls.inline { margin-right: auto; }
+    .sidebar-header .menu-btn { padding-left: 8px; }
   
   .logo {
     color: var(--primary);
     font-size: 14px;
     font-weight: 400;
   }
+    body.mac .logo { display: none !important; }
   
   .menu-btn {
     cursor: pointer;

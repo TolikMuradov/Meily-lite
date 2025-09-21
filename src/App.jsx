@@ -267,13 +267,7 @@ export default function App() {
   return (
     <div className="app-container">
       <div className='drag-bar'></div>
-      {isMac ? (
-        <div className="mac-window-controls" aria-label="window controls">
-          <button className='mac-btn close' title='Close' onClick={() => window.api && window.api.close()} />
-          <button className='mac-btn minimize' title='Minimize' onClick={() => window.api && window.api.minimize()} />
-          <button className='mac-btn maximize' title={isMaximized ? 'Restore' : 'Maximize'} onClick={() => { if (window.api) { window.api.maximize(); } }} />
-        </div>
-      ) : (
+      {!isMac && (
         <div className="window-controls">
           <button className='minimize' onClick={() => window.api && window.api.minimize()}>–</button>
           <button className='maximize' title={isMaximized ? 'Restore' : 'Maximize'} onClick={() => { if (window.api) { console.log('[renderer] maximize button click. isMaximized=', isMaximized); window.api.maximize(); } }}>
@@ -299,6 +293,7 @@ export default function App() {
         width={sidebarWidth}
         tagsList={allTags}
         noteFilter={noteFilter}
+        isMac={isMac}
       />
 
       <NotesList

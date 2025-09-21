@@ -28,13 +28,14 @@
     top: 6px;
     left: 10px;
     display: flex;
-    gap: 8px;
+    gap: 6px;
     z-index: 150;
     -webkit-app-region: no-drag;
   }
+  .mac-window-controls.inline { position: static; gap:6px; }
   .mac-window-controls .mac-btn {
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     border: 1px solid rgba(0,0,0,0.15);
     background: #c4c4c4;

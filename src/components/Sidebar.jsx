@@ -26,6 +26,7 @@ export default function Sidebar({
   handleAddCategory,
   tagsList,
   noteFilter,
+  isMac,
 }) {
   
 
@@ -41,7 +42,7 @@ export default function Sidebar({
   return (
     <div className="sidebar">
       <div className="sidebar-fixed-header">
-        <SidebarHeader/>
+  <SidebarHeader isMac={isMac} />
       </div>
       <div className="sidebar-scroll">
         <SidebarSection>
