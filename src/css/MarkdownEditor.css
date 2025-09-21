@@ -178,6 +178,7 @@
   right: 16px;
   bottom: 16px;
   display: flex;
+  flex-direction: column;
   gap: 8px;
   padding: 8px;
   background: var(--bg-panel, rgba(0,0,0,0.5));
@@ -206,12 +207,26 @@
 
 /* Search highlight decorations */
 .cm-search-match {
-  background: rgba(255, 214, 0, 0.35);
-  outline: 1px solid rgba(255, 214, 0, 0.6);
+  background: var(--search-match-bg);
+  outline: 1px solid var(--search-match-border);
   border-radius: 2px;
 }
 .cm-search-match-active {
-  background: rgba(88, 140, 255, 0.45);
-  outline: 1px solid rgba(88, 140, 255, 0.9);
+  background: var(--search-active-bg);
+  outline: 1px solid var(--search-active-border);
   border-radius: 2px;
+  box-shadow: 0 0 0 1px var(--search-active-border), 0 0 4px -1px var(--search-active-border);
+  animation: searchPulse 2.5s ease-in-out infinite;
+}
+
+.no-search-anim .cm-search-match-active { animation: none !important; box-shadow: 0 0 0 1px var(--search-active-border); }
+
+@keyframes searchPulse {
+  0% { box-shadow: 0 0 0 1px var(--search-active-border), 0 0 3px -1px var(--search-active-border); }
+  50% { box-shadow: 0 0 0 1px var(--search-active-border), 0 0 6px 0 var(--search-active-border); }
+  100% { box-shadow: 0 0 0 1px var(--search-active-border), 0 0 3px -1px var(--search-active-border); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cm-search-match-active { animation: none; }
 }

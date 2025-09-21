@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { debounce } from 'lodash';
 import './index.css';
 import './css/Modal.css';
 import Sidebar from './components/Sidebar';
@@ -14,7 +13,7 @@ import useNoteEditing from './components/App/hooks/useNoteEditing';
 import ThemeManager from './components/App/ThemeManager';
 import calculateNoteStats from './components/App/NoteStatsManager';
 // NoteActionsManager hook formatına dönüştürüldü
-import useNoteActions, { extendNoteActions } from './components/App/hooks/useNoteActions';
+import useNoteActions, { useExtendedNoteActions } from './components/App/hooks/useNoteActions';
 import MarkdownManager from './components/App/MarkdownManager';
 import useNoteFiltering from './components/App/hooks/useNoteFiltering';
 import useCategories from './components/App/hooks/useCategories';
@@ -28,14 +27,7 @@ export default function App() {
      console.log("📥 Global scroll event geldi:", e.detail);
  });
   
-  const autosaveRef = useRef(
-    debounce((note) => {
-      if (!note.category) return;
-      updateNote(note.id, note)
-        .then(saved => setNotes(prev => prev.map(n => n.id === saved.id ? saved : n)))
-        .catch(err => console.error("Autosave hatası:", err));
-    }, 1000)
-  );
+  // eski autosaveRef kaldırıldı (lint temizliği)
   const editorRef = useRef(null);
   const previewRef = useRef(null);
 
@@ -43,8 +35,8 @@ export default function App() {
   const [notes, setNotes] = useState([]);
   const [noteFilter, setNoteFilter] = useState({ type: 'all' });
   const {
-    categories,
-    setCategories,
+  categories,
+  // setCategories kaldırıldı (unused)
     selectedCategory,
     setSelectedCategory,
     contextCategory,
@@ -76,14 +68,15 @@ export default function App() {
   const [modalDefaultValue, setModalDefaultValue] = useState('');
   const [onModalSubmit, setOnModalSubmit] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sidebarWidth, setSidebarWidth] = useState(200);
-  const [globalTags, setGlobalTags] = useState([]);
+  const [sidebarWidth] = useState(200); // setSidebarWidth kullanılmıyor
+  // const [globalTags] = useState([]); // globalTags kullanılmıyor
   const [sortOption, setSortOption] = useState('updated-desc');
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [linkText, setLinkText] = useState('');
   const [linkHref, setLinkHref] = useState('');
   const [viewMode, setViewMode] = useState('both'); // 'editor' | 'preview' | 'both
   const [isMaximized, setIsMaximized] = useState(false);
+  const isMac = typeof window !== 'undefined' && window.api && window.api.platform === 'darwin';
   
 
   const uniqueTags = [...new Set(notes.flatMap(n => (n.tags || []).map(t => t.name)))];
@@ -134,6 +127,13 @@ export default function App() {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
+  useEffect(() => {
+    if (isMac) {
+      document.body.classList.add('mac');
+      return () => document.body.classList.remove('mac');
+    }
+  }, [isMac]);
+
   // Track maximize state from main process
   useEffect(() => {
     if (window.api && window.api.onWindowMaximized) {
@@ -167,22 +167,8 @@ export default function App() {
     noteTags,
     categories
   });
-  const {
-    handleAddNote,
-    handleUpdateNote,
-    handleSoftDelete,
-    handleRestore,
-    handlePermanentDelete,
-    handleTogglePin,
-    handleExport,
-  } = extendNoteActions(baseActions, {
-    selectedNote,
-    setSelectedNote,
-    setNotes,
-    title,
-    content,
-    noteTags,
-  });
+  const { handleAddNote, handleUpdateNote } = baseActions;
+  const { handleSoftDelete, handleRestore, handlePermanentDelete, handleTogglePin, handleExport } = useExtendedNoteActions(baseActions, { selectedNote, setSelectedNote, setNotes, title, content, noteTags });
 
   // handleDeleteNote yerine handleSoftDelete kullanılıyor
 
@@ -221,7 +207,7 @@ export default function App() {
     });
   };
 
-  const { handleInsertMarkdown, insertMarkdownAtCursor } = MarkdownManager({
+  const { insertMarkdownAtCursor } = MarkdownManager({
     setContent,
     editorRef
   });
@@ -281,13 +267,21 @@ export default function App() {
   return (
     <div className="app-container">
       <div className='drag-bar'></div>
-      <div className="window-controls">
-        <button className='minimize' onClick={() => window.api && window.api.minimize()}>–</button>
-        <button className='maximize' title={isMaximized ? 'Restore' : 'Maximize'} onClick={() => { if (window.api) { console.log('[renderer] maximize button click. isMaximized=', isMaximized); window.api.maximize(); } }}>
-          {isMaximized ? '🗗' : '◻'}
-        </button>
-        <button className='close' onClick={() => window.api && window.api.close()}>×</button>
-      </div>
+      {isMac ? (
+        <div className="mac-window-controls" aria-label="window controls">
+          <button className='mac-btn close' title='Close' onClick={() => window.api && window.api.close()} />
+          <button className='mac-btn minimize' title='Minimize' onClick={() => window.api && window.api.minimize()} />
+          <button className='mac-btn maximize' title={isMaximized ? 'Restore' : 'Maximize'} onClick={() => { if (window.api) { window.api.maximize(); } }} />
+        </div>
+      ) : (
+        <div className="window-controls">
+          <button className='minimize' onClick={() => window.api && window.api.minimize()}>–</button>
+          <button className='maximize' title={isMaximized ? 'Restore' : 'Maximize'} onClick={() => { if (window.api) { console.log('[renderer] maximize button click. isMaximized=', isMaximized); window.api.maximize(); } }}>
+            {isMaximized ? '🗗' : '◻'}
+          </button>
+          <button className='close' onClick={() => window.api && window.api.close()}>×</button>
+        </div>
+      )}
 
       <Sidebar
         categories={categories}

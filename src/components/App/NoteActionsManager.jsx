@@ -1,7 +1,7 @@
 import { createNote, updateNote } from '../../api';
 
 export default function NoteActionsManager({
-  notes,
+  // notes,
   setNotes,
   selectedNote,
   setSelectedNote,
@@ -11,9 +11,9 @@ export default function NoteActionsManager({
   setContent,
   noteStatus,
   noteTags,
-  setNoteFilter,
-  setSelectedCategory,
-  categories
+  // setNoteFilter,
+  // setSelectedCategory,
+  // categories
 }) {
   const handleAddNote = (categoryId) => {
     console.log('handleAddNote called with categoryId:', categoryId);

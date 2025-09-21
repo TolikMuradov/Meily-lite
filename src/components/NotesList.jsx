@@ -31,7 +31,7 @@ export default function NotesList({
   filterTitle = 'All Notes',
   restoreNote,
   permanentlyDelete,
-  sortOption,
+  // sortOption (unused - sadece UI state dışarıda yönetiliyor),
   setSortOption  
 }) {
   const isTrashMode = noteFilter?.type === 'trash';

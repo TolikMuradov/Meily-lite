@@ -1,7 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
-const shell = require('electron').shell;
 
 contextBridge.exposeInMainWorld('api', {
+  platform: process.platform,
   openSettings: () => ipcRenderer.send('open-settings-window'),
   onThemeChange: (callback) => ipcRenderer.on('theme-changed', (_, theme) => callback(theme)),
   selectImage: () => ipcRenderer.invoke('select-image'),

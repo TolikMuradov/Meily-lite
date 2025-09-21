@@ -178,8 +178,7 @@ export function markdownTableEditor() {
           let rebuilt = normalized;
           // Map cells to start/end in rebuilt (approx, since we may have added pipes)
           const cellRanges = [];
-          let off = 0;
-          let pre = rebuilt.indexOf('|'); // first pipe index
+          // removed unused off & pre
           // build by scanning between pipes
           const pipePositions = [];
           for (let i = 0; i < rebuilt.length; i++) if (rebuilt[i] === '|') pipePositions.push(i);

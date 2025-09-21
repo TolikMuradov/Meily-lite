@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { storage, storageMode } from '../../../storage';
+import { storage } from '../../../storage';
 
 // Kategori yönetimi: liste, seçili kategori, CRUD ve context menu koordinasyonu
-export default function useCategories({ setNotes, onInitialFilter }) {
+export default function useCategories() { // params kaldırıldı (unused)
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [contextCategory, setContextCategory] = useState(null);
@@ -22,7 +22,7 @@ export default function useCategories({ setNotes, onInitialFilter }) {
         setCategories([]);
       });
     return () => { mounted = false; };
-  }, [onInitialFilter]);
+  }, []);
 
   const handleAddCategory = useCallback((name) => {
     return storage.createCategory({ name })

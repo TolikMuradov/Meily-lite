@@ -13,7 +13,7 @@ export default function ShortcutsModal({ open, onClose }) {
     }
     for (const arr of map.values()) arr.sort((a,b)=>a.title.localeCompare(b.title));
     return Array.from(map.entries()).sort((a,b)=>a[0].localeCompare(b[0]));
-  }, [open]);
+  }, []);
 
   if (!open) return null;
 

@@ -60,8 +60,8 @@ const localProvider = {
   async getCategories() { return ensureArray(KEYS.categories); },
   async createCategory(cat) {
     const list = await ensureArray(KEYS.categories);
-    const { is_default, ...rest } = cat || {};
-    const newCat = { id: genId(), ...rest };
+  const { is_default: _is_default, ...rest } = cat || {}; // _is_default intentionally ignored
+  const newCat = { id: genId(), ...rest };
     await set(KEYS.categories, [...list, newCat]);
     return newCat;
   },

@@ -1,11 +1,11 @@
 import { keymap } from '@codemirror/view';
-import { EditorSelection } from '@codemirror/state';
+import { EditorSelection, Transaction } from '@codemirror/state';
 import { TableEditor } from '@susisu/mte-kernel';
 import { formatMarkdownTable, tokenizeLine } from './tableFormatter';
+import { getTableConfig } from '../config/tableConfig';
 
-// Feature flags / debug
-const TABLE_KERNEL_ENABLE = false; // Kernel tamamen devre dışı (fallback zorlanır)
-const TABLE_DEBUG = true; // debug aktif
+// Config backed flags
+function cfg() { return getTableConfig(); }
 
 // Utility: extract full table text block at a given cursor position
 function locateTable(state, pos) {
@@ -30,15 +30,28 @@ function extractTable(state, region) {
   return lines.join('\n');
 }
 
-function applyEdit(view, region, newText, cursorOffset) {
+function applyEdit(view, region, newText, cursorOffset, userEvent) {
   const { state } = view;
   const from = state.doc.line(region.start).from;
   const to = state.doc.line(region.end).to;
-  view.dispatch({
-    changes: { from, to, insert: newText },
-    selection: cursorOffset != null ? EditorSelection.single(from + cursorOffset) : undefined,
-    scrollIntoView: true
-  });
+  const original = state.sliceDoc(from, to);
+  const changeNeeded = newText !== original;
+  const annotations = [];
+  if (userEvent) annotations.push(Transaction.userEvent.of(userEvent));
+  if (changeNeeded) {
+    view.dispatch({
+      changes: { from, to, insert: newText },
+      selection: cursorOffset != null ? EditorSelection.single(from + cursorOffset) : undefined,
+      scrollIntoView: true,
+      annotations
+    });
+  } else if (cursorOffset != null) {
+    // Only cursor move; no content change -> selection update without history (no userEvent)
+    view.dispatch({
+      selection: EditorSelection.single(from + cursorOffset),
+      scrollIntoView: true
+    });
+  }
 }
 
 function buildKernel(tableText) {
@@ -69,11 +82,11 @@ function runWithKernel(view, fn) {
   }
 
   let kernel = null;
-  if (TABLE_KERNEL_ENABLE) {
+  if (cfg().kernelEnabled) {
     try {
       kernel = buildKernel(original);
     } catch (e) {
-      if (TABLE_DEBUG) console.warn('[table.kernel.init] failed', e);
+  if (cfg().debug) console.warn('[table.kernel.init] failed', e);
       // Kernel başarısızsa manuel fallback devam edecek
       kernel = null;
     }
@@ -84,7 +97,7 @@ function runWithKernel(view, fn) {
     const tableStartFrom = state.doc.line(region.start).from;
     result = fn(kernel, pos - tableStartFrom, { region, state, original, tableStartFrom });
   } catch (e) {
-    if (TABLE_DEBUG) console.warn('[table.op] failed, aborting op', e);
+  if (cfg().debug) console.warn('[table.op] failed, aborting op', e);
     return false;
   }
   if (!result) return false;
@@ -100,7 +113,7 @@ function runWithKernel(view, fn) {
 
   // Değişim (veya sadece cursor) uygula
   if (newText !== original || cursor != null) {
-    applyEdit(view, region, newText, cursor);
+    applyEdit(view, region, newText, cursor, result.userEvent);
     return true;
   }
   return true; // tablo içindeydik ama hareket yok -> yine de handled
@@ -137,7 +150,7 @@ export function formatTable(view) {
 
 export function moveCell(view, dir) {
   return runWithKernel(view, (kernel, relCursor, ctx) => {
-    if (TABLE_DEBUG) console.log('[table.moveCell]', { dir, relCursor, region: ctx.region, original: ctx.original.split('\n')[0] + '...' });
+  if (cfg().debug) console.log('[table.moveCell]', { dir, relCursor, region: ctx.region, original: ctx.original.split('\n')[0] + '...' });
     // Provisional single header line: use Tab (next) to create skeleton if Enter not used yet
     if (dir === 'next') {
       const { state } = view;
@@ -147,7 +160,7 @@ export function moveCell(view, dir) {
         const headerLine = state.doc.line(region.start).text;
         const headerCells = splitCells(headerLine);
         if (headerCells.length >= 2) {
-          if (TABLE_DEBUG) console.log('[table.tab.skeletonTrigger]', headerCells);
+          if (cfg().debug) console.log('[table.tab.skeletonTrigger]', headerCells);
           const alignRow = buildAlignmentFromHeader(headerCells);
           const emptyRow = buildEmptyRow(headerCells);
           const from = state.doc.line(region.start).to;
@@ -216,12 +229,14 @@ export function moveCell(view, dir) {
         if (ni < lines.length) {
           targetLine = ni; targetCol = 0;
         } else {
-          // append a new empty data row (headerCells from first line)
-            const headerCells = splitCells(lines[0]);
-            if (headerCells.length >= 2) {
-              lines.push(buildEmptyRow(headerCells));
+          // append a new empty data row via helper
+            const insertAt = lines.length; // push at end
+            const res = insertEmptyRowFormatted(lines, insertAt, 'tab.appendRow');
+            if (res) {
               newRowAdded = true;
-              targetLine = lines.length - 1;
+              // replace lines with formatted result
+              lines = res.lines;
+              targetLine = insertAt;
               targetCol = 0;
             } else return null; // cannot add row
         }
@@ -245,12 +260,20 @@ export function moveCell(view, dir) {
         }
       }
     }
-    // Always format after movement (user request)
-    const formattedLines = formatMarkdownTable(lines);
-    const newText = formattedLines.join('\n');
-    // Recompute target line & cell start inside formatted output
-    // Because formatting may pad cells, find target cell interior by counting pipes.
-    const targetLineText = formattedLines[targetLine];
+    // Conditional formatting: only if autoFormatOnTab enabled or a new row was added.
+    let finalLines;
+    if (cfg().autoFormatOnTab || newRowAdded) {
+      const t0 = performance.now();
+      finalLines = formatMarkdownTable(lines);
+      const dur = performance.now() - t0;
+      const threshold = cfg().perfWarnThresholdMs || 24;
+      if (dur > threshold) console.warn('[table.perf.format.moveCell]', { dur: dur.toFixed(2), threshold, rows: lines.length });
+    } else {
+      finalLines = lines; // raw (un-padded) movement
+    }
+    const newText = finalLines.join('\n');
+    // Recompute target line & cell start inside (possibly formatted) output
+    const targetLineText = finalLines[targetLine];
     let pipeCount = -1; let interiorPos = null;
     for (let i = 0; i < targetLineText.length; i++) {
       if (targetLineText[i] === '|') {
@@ -264,59 +287,79 @@ export function moveCell(view, dir) {
     }
     if (interiorPos == null) interiorPos = targetLineText.length; // fallback
     // Compute cursor absolute offset
-    let newOffsets = []; let acc2 = 0; for (const l of formattedLines) { newOffsets.push(acc2); acc2 += l.length + 1; }
+    let newOffsets = []; let acc2 = 0; for (const l of finalLines) { newOffsets.push(acc2); acc2 += l.length + 1; }
     const cursor = newOffsets[targetLine] + interiorPos;
-    if (TABLE_DEBUG) console.log('[table.moveCell.done]', { dir, targetLine, targetCol, newRowAdded });
-    return { text: newText, cursor };
+  if (cfg().debug) console.log('[table.moveCell.done]', { dir, targetLine, targetCol, newRowAdded });
+    // If text did not change (no formatting & no new row) return only cursor movement
+    if (newText === ctx.original) return { text: ctx.original, cursor, userEvent: 'tableMove' };
+    // If new row added treat as structure change so it becomes separate undo group boundary
+    return { text: newText, cursor, userEvent: newRowAdded ? 'tableStructure' : 'tableMove' };
   });
 }
 
 export function insertRow(view, where) {
   return runWithKernel(view, (kernel, relCursor, ctx) => {
-    // Try kernel
-    // Kernel devre dışı -> manuel
-    // Manual fallback
     const { original } = ctx;
-    const lines = original.split('\n');
-    const header = lines[0];
-    const colCount = header.split('|').length - 2;
-    const blankRow = '|' + Array(colCount).fill('').join('|') + '|';
-    // line offsets
-    let lineOffsets = []; let acc=0; for (const l of lines){lineOffsets.push(acc); acc+=l.length+1;}
-    let curLine=0; for(let i=0;i<lines.length;i++){ if(relCursor>=lineOffsets[i] && relCursor<=lineOffsets[i]+lines[i].length){curLine=i;break;} }
-    const insIndex = where === 'below' ? curLine+1 : curLine;
-    lines.splice(insIndex,0,blankRow);
-    const newText = lines.join('\n');
-    const cursor = lineOffsets[curLine];
-    return { text: newText, cursor };
+    let lines = original.split('\n');
+    // Determine current line index
+    let lineOffsets = []; let acc=0; for(const l of lines){ lineOffsets.push(acc); acc += l.length + 1; }
+    let curLine = 0; for(let i=0;i<lines.length;i++){ if(relCursor>=lineOffsets[i] && relCursor<=lineOffsets[i]+lines[i].length){ curLine=i; break; } }
+    const insIndex = where === 'below' ? curLine + 1 : curLine;
+    const res = insertEmptyRowFormatted(lines, insIndex, 'insertRow');
+    if (!res) return false;
+    return { text: res.lines.join('\n'), cursor: res.cursorOffsetInTable, userEvent: 'tableStructure' };
   });
 }
 
 export function insertColumn(view, where) {
   return runWithKernel(view, (kernel, relCursor, ctx) => {
-    // Kernel devre dışı -> manuel
     const { original } = ctx;
-    const lines = original.split('\n');
-    // Determine position
+    let lines = original.split('\n');
+    if (lines.length < 2) return false; // not a full table
+    // Determine current line index & in-line position
     let lineOffsets=[];let acc=0;for(const l of lines){lineOffsets.push(acc);acc+=l.length+1;}
-    let curLine=0;for(let i=0;i<lines.length;i++){if(relCursor>=lineOffsets[i] && relCursor<=lineOffsets[i]+lines[i].length){curLine=i;break;}}
+    let curLine=0;for(let i=0;i<lines.length;i++){ if(relCursor>=lineOffsets[i] && relCursor<=lineOffsets[i]+lines[i].length){ curLine=i; break; } }
     const relInLine = relCursor - lineOffsets[curLine];
-    const pipesPositions=[]; for(let i=0;i<lines[curLine].length;i++){ if(lines[curLine][i]==='|') pipesPositions.push(i); }
-    const headerParts = lines[0].split('|');
-    const colCount = headerParts.length - 2;
-    let col=0; for(let i=1;i<pipesPositions.length;i++){ if(relInLine>=pipesPositions[i-1] && relInLine<pipesPositions[i]) { col=i-1; break; } if(relInLine>=pipesPositions[pipesPositions.length-1]) col=colCount-1; }
-    const insertAt = where==='after' ? col+1 : col;
-    function addCell(line,isAlign){
-      const parts=line.split('|');
-      const cells=parts.slice(1,parts.length-1);
-      const newCell=isAlign? '---' : '';
-      cells.splice(insertAt,0,newCell);
+    // Use header as column reference
+    const header = lines[0];
+    const headerCells = splitCells(header);
+    if (headerCells.length < 1) return false;
+    // Kolon indeksini mevcut yardımcıyla (pipe sayımı) hesapla
+    const lineText = lines[curLine];
+    let col = getColumnIndex(lineText, relInLine);
+    if (col < 0) col = 0;
+    const insertAt = where === 'after' ? col + 1 : col;
+    // Mutate each line inserting blank / alignment cell
+    lines = lines.map((ln, idx) => {
+      const cells = splitCells(ln);
+      if (idx === 1 && isAlignmentRow(ln)) {
+        cells.splice(insertAt, 0, '---');
+      } else {
+        cells.splice(insertAt, 0, ''); // boş header/data hücresi
+      }
       return '|' + cells.join('|') + '|';
+    });
+    // Format entire table for padding & alignment widths
+    const formatted = formatMarkdownTable(lines);
+    const newText = formatted.join('\n');
+    // Compute cursor: go to first data row (if exists) in new column interior; else header
+    const targetLineIndex = formatted.length > 2 ? 2 : 0;
+    const targetLine = formatted[targetLineIndex];
+    // Find pipe corresponding to insertAt
+    let pipeCount = -1; let cursorInLine = 0;
+    for (let i=0;i<targetLine.length;i++) {
+      if (targetLine[i] === '|') {
+        pipeCount++;
+        if (pipeCount === insertAt) {
+          cursorInLine = (targetLine[i+1] === ' ' ? i+2 : i+1);
+          break;
+        }
+      }
     }
-    for(let i=0;i<lines.length;i++){
-      if(i===1) lines[i]=addCell(lines[i],true); else lines[i]=addCell(lines[i],false);
-    }
-    return { text: lines.join('\n') };
+    // Build offsets to compute absolute cursor
+    let off=0; const offs=[]; for(const l of formatted){ offs.push(off); off += l.length + 1; }
+    const cursor = offs[targetLineIndex] + cursorInLine;
+    return { text: newText, cursor, userEvent: 'tableStructure' };
   });
 }
 
@@ -369,140 +412,94 @@ function isAlignmentRow(text) {
 }
 
 function splitCells(line) {
-  return tokenizeLine(line).map(c => c.trim());
+  return tokenizeLine(line).map(_cell => _cell.trim());
 }
 
 function buildAlignmentFromHeader(headerCells) {
-  return '|' + headerCells.map(c => '---').join('|') + '|';
+  return '|' + headerCells.map(() => '---').join('|') + '|';
 }
 
 function buildEmptyRow(headerCells) {
   return '|' + headerCells.map(() => ' ').join('|') + '|';
 }
 
+// Shared helper: insert an empty data row at given index, format, compute cursor inside first cell.
+// Returns { lines, cursorOffsetInTable } or null on failure.
+function insertEmptyRowFormatted(lines, insertAt, perfLabel) {
+  const headerCells = splitCells(lines[0]);
+  if (headerCells.length < 2) return null;
+  const emptyRow = buildEmptyRow(headerCells);
+  lines.splice(insertAt, 0, emptyRow);
+  const t0 = performance.now();
+  const formatted = formatMarkdownTable(lines);
+  const dur = performance.now() - t0;
+  const threshold = cfg().perfWarnThresholdMs || 24;
+  if (dur > threshold) console.warn('[table.perf.format.' + perfLabel + ']', { dur: dur.toFixed(2), threshold, rows: formatted.length });
+  const dataLine = formatted[insertAt];
+  const firstPipe = dataLine.indexOf('|');
+  const cursorInLine = firstPipe >= 0 ? (dataLine[firstPipe + 1] === ' ' ? firstPipe + 2 : firstPipe + 1) : dataLine.length;
+  let off = 0; const formattedOffsets = [];
+  for (const l of formatted) { formattedOffsets.push(off); off += l.length + 1; }
+  return { lines: formatted, cursorOffsetInTable: formattedOffsets[insertAt] + cursorInLine };
+}
 
 export function handleEnter(view) {
   const { state } = view;
   const pos = state.selection.main.head;
   const line = state.doc.lineAt(pos);
-  const atLineEnd = pos === line.to;
-  if (!atLineEnd) return false; // only intercept Enter at EOL
-  const text = line.text;
-  if (!/\|/.test(text)) return false;
-  const region = locateTable(state, pos);
-  if (TABLE_DEBUG) console.log('[table.enter.check]', { line: text, region });
-  // Case 1: single header line (no alignment row yet)
-  if (region && region.start === region.end) {
-    const headerCells = splitCells(text);
-    if (TABLE_DEBUG) console.log('[table.enter.headerCandidate]', headerCells);
-    if (headerCells.length >= 2) {
-      const alignRow = buildAlignmentFromHeader(headerCells);
-      const emptyRow = buildEmptyRow(headerCells);
-      const insertion = '\n' + alignRow + '\n' + emptyRow;
-      const from = line.to;
-      view.dispatch({
-        changes: { from, to: from, insert: insertion },
-      });
-      if (TABLE_DEBUG) console.log('[table.enter.skeletonInserted]', { alignRow, emptyRow });
-      // Reformat (widths) after insertion
-      const newState = view.state;
-      const newRegion = locateTable(newState, from + 1) || region; // updated region now 3 lines
-      if (newRegion) {
-        const originalBlock = extractTable(newState, newRegion);
-  const formattedLines = formatMarkdownTable(originalBlock.split('\n'));
-        const formatted = formattedLines.join('\n');
-        if (TABLE_DEBUG) console.log('[table.enter.formatted]', formattedLines);
-        const blockFrom = newState.doc.line(newRegion.start).from;
-        const blockTo = newState.doc.line(newRegion.end).to;
-        view.dispatch({ changes: { from: blockFrom, to: blockTo, insert: formatted } });
-        // place cursor in first data row first cell
-        const afterFormatState = view.state;
-        const formattedRegion = locateTable(afterFormatState, blockFrom) || newRegion;
-        // data row is line index start+2
-        const dataLine = afterFormatState.doc.line(formattedRegion.start + 2);
-        const dataText = dataLine.text;
-        const firstPipe = dataText.indexOf('|');
-        const secondPipe = dataText.indexOf('|', firstPipe + 1);
-        const cursor = (firstPipe >=0 && secondPipe>firstPipe) ? dataLine.from + firstPipe + 2 : dataLine.from + dataText.length; // inside first cell
-        view.dispatch({ selection: EditorSelection.single(cursor), scrollIntoView: true });
+  if (pos !== line.to) return false; // only at EOL
+  if (!/\|/.test(line.text)) return false;
+  // Use runWithKernel for uniform single-dispatch editing.
+  return runWithKernel(view, (_kernel, relCursor, ctx) => {
+    const { original, region } = ctx;
+    const lines = original.split('\n');
+    // Determine current line index inside table
+    let offsets = []; let acc = 0; for (const l of lines) { offsets.push(acc); acc += l.length + 1; }
+    let lineIndex = 0; for (let i = 0; i < lines.length; i++) { if (relCursor >= offsets[i] && relCursor <= offsets[i] + lines[i].length) { lineIndex = i; break; } }
+    const currentLine = lines[lineIndex];
+    if (cfg().debug) console.log('[table.enter.singleDispatch]', { lineIndex, total: lines.length });
+
+    // Case A: single header line (skeleton creation)
+    if (lines.length === 1) {
+      const headerCells = splitCells(currentLine);
+      if (headerCells.length >= 2) {
+        const alignRow = buildAlignmentFromHeader(headerCells);
+        const emptyRow = buildEmptyRow(headerCells);
+        let newLines = [currentLine, alignRow, emptyRow];
+        const t0 = performance.now();
+        const formatted = formatMarkdownTable(newLines);
+        const dur = performance.now() - t0; const threshold = cfg().perfWarnThresholdMs || 24; if (dur > threshold) console.warn('[table.perf.format.enter.skeleton]', { dur: dur.toFixed(2), threshold, rows: formatted.length });
+        // Cursor: first data row (index 2) first cell interior
+        const dataLine = formatted[2];
+        const firstPipe = dataLine.indexOf('|');
+        const cursorInLine = firstPipe >= 0 ? (dataLine[firstPipe + 1] === ' ' ? firstPipe + 2 : firstPipe + 1) : dataLine.length;
+        // Build new offsets for formatted lines
+        let off2 = 0; let formattedOffsets = []; for (const l of formatted) { formattedOffsets.push(off2); off2 += l.length + 1; }
+        return { text: formatted.join('\n'), cursor: formattedOffsets[2] + cursorInLine };
       }
-      return true;
+      return false;
     }
-  }
-  // Case 2: alignment row line -> add empty data row below
-  if (isAlignmentRow(text)) {
-    if (TABLE_DEBUG) console.log('[table.enter.onAlignmentRow]');
-    // Need header above to know column count
-    if (line.number > 1) {
-      const headerLine = state.doc.line(line.number - 1).text;
-      const headerCells = splitCells(headerLine);
-      if (headerCells.length) {
-        const emptyRow = '\n' + buildEmptyRow(headerCells);
-        const from = line.to;
-        view.dispatch({ changes: { from, to: from, insert: emptyRow } });
-        // Reformat entire table (including new row)
-        const newState = view.state;
-        const region2 = locateTable(newState, from + 1);
-        if (region2) {
-          const originalBlock = extractTable(newState, region2);
-          const formattedLines = formatMarkdownTable(originalBlock.split('\n'));
-          const formatted = formattedLines.join('\n');
-          if (TABLE_DEBUG) console.log('[table.enter.newDataRowFormatted]', formattedLines);
-          const blockFrom = newState.doc.line(region2.start).from;
-          const blockTo = newState.doc.line(region2.end).to;
-          view.dispatch({ changes: { from: blockFrom, to: blockTo, insert: formatted } });
-          const afterFormatState = view.state;
-          // cursor to new row first cell
-            const formattedRegion = locateTable(afterFormatState, blockFrom) || region2;
-            const dataLineIdx = formattedRegion.start + 2; // header, align, first data
-            const dataLine = afterFormatState.doc.line(dataLineIdx + (region2.end - region2.start + 1) - (formattedRegion.end - formattedRegion.start + 1)); // fallback simple
-            const dl = afterFormatState.doc.line(formattedRegion.end); // simpler: place at last line (new row)
-            const dlText = dl.text;
-            const pipe1 = dlText.indexOf('|');
-            const cursor = pipe1 >=0 ? dl.from + pipe1 + 2 : dl.to;
-            view.dispatch({ selection: EditorSelection.single(cursor), scrollIntoView: true });
-        }
-        return true;
+
+    // Case B: alignment row line (insert new first data row below alignment)
+    if (isAlignmentRow(currentLine)) {
+      // Need header for column count
+      if (lineIndex > 0) {
+        const insertAt = lineIndex + 1;
+        const res = insertEmptyRowFormatted(lines, insertAt, 'enter.alignmentRow');
+        if (res) return { text: res.lines.join('\n'), cursor: res.cursorOffsetInTable };
       }
+      return false;
     }
-  }
-  // Case 3: inside an existing table on a normal data row -> create new data row below
-  if (region && region.start !== region.end && line.number >= region.start && line.number <= region.end && !isAlignmentRow(text)) {
-    // Header is first line of region
-    const headerLine = state.doc.line(region.start).text;
-    const headerCells = splitCells(headerLine);
-    if (headerCells.length >= 2) {
-      const emptyRow = '\n' + buildEmptyRow(headerCells);
-      const from = line.to;
-      view.dispatch({ changes: { from, to: from, insert: emptyRow } });
-      if (TABLE_DEBUG) console.log('[table.enter.newDataRowInserted]');
-      // Reformat entire updated table
-      const afterInsertState = view.state;
-      const region3 = locateTable(afterInsertState, from + 1) || region;
-      if (region3) {
-        const block = extractTable(afterInsertState, region3);
-        const formattedLines = formatMarkdownTable(block.split('\n'));
-        const formatted = formattedLines.join('\n');
-        if (TABLE_DEBUG) console.log('[table.enter.dataRow.formatted]', formattedLines);
-        const blockFrom = afterInsertState.doc.line(region3.start).from;
-        const blockTo = afterInsertState.doc.line(region3.end).to;
-        view.dispatch({ changes: { from: blockFrom, to: blockTo, insert: formatted } });
-        const finalState = view.state;
-        // New row should now be last line of region (or specifically the one after current line)
-        const finalRegion = locateTable(finalState, blockFrom) || region3;
-        // Find line number of newly inserted row: original line.number + 1 after formatting
-        const newLineNumber = line.number + 1; // formatting preserves line count
-        const newLine = finalState.doc.line(newLineNumber);
-        const nlText = newLine.text;
-        const firstPipe = nlText.indexOf('|');
-        const secondPipe = nlText.indexOf('|', firstPipe + 1);
-        const cursor = (firstPipe >=0 && secondPipe>firstPipe) ? newLine.from + firstPipe + 2 : newLine.from + nlText.length;
-        view.dispatch({ selection: EditorSelection.single(cursor), scrollIntoView: true });
-      }
-      return true;
+
+    // Case C: existing table normal (header or data) line -> insert new data row below current line.
+    if (region.start !== region.end) {
+      const insertAt = lineIndex + 1;
+      const res = insertEmptyRowFormatted(lines, insertAt, 'enter.dataRow');
+      if (res) return { text: res.lines.join('\n'), cursor: res.cursorOffsetInTable };
     }
-  }
-  return false;
+
+    return false; // not handled -> allow default newline
+  });
 }
 
 export function tableKernelExtension() {

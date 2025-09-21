@@ -27,6 +27,7 @@ body.opaque{
   height: 100%;
   overflow: hidden;
   background: transparent;
+  box-sizing: border-box;
 }
 
 .sidebar {

@@ -5,7 +5,7 @@
     padding: 0;
     box-sizing: border-box;
   }
-  
+
 
   .drag-bar {
     position: absolute;
@@ -14,9 +14,49 @@
     width: 70%;
     height: 30px;
     -webkit-app-region: drag;
+    z-index: 50;
   }
-  
-  
+
+  body.mac .drag-bar {
+    width: 100%;
+  }
+
+  /* mac traffic-light controls */
+  .mac-window-controls {
+    position: absolute;
+    top: 6px;
+    left: 10px;
+    display: flex;
+    gap: 8px;
+    z-index: 150;
+    -webkit-app-region: no-drag;
+  }
+  .mac-window-controls .mac-btn {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.15);
+    background: #c4c4c4;
+    padding:0;
+    cursor: default;
+    position: relative;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.15) inset, 0 0 2px rgba(0,0,0,0.4) inset;
+  }
+  .mac-window-controls .mac-btn.close { background: #ff5f56; }
+  .mac-window-controls .mac-btn.minimize { background: #ffbd2e; }
+  .mac-window-controls .mac-btn.maximize { background: #27c93f; }
+  .mac-window-controls .mac-btn:hover::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.15);
+  }
+  .mac-window-controls .mac-btn:active::after {
+    background: rgba(0,0,0,0.25);
+  }
+
+
   button, input, select, textarea {
     font-family: inherit;
   }
@@ -25,12 +65,12 @@
     flex: 1;
     overflow: hidden;
   }
-  
+
   .editor-preview-container > * {
     flex: 1;
     overflow: auto;
   }
-  
+
 
   .window-controls {
     display: flex;
@@ -44,7 +84,7 @@
     right: 0;
     z-index: 100;
   }
-  
+
   .window-controls button {
     width: 15px;
     height: 15px;
@@ -56,20 +96,20 @@
     color: var(--text);
     transition: all 0.5s ease;
   }
-  
+
   .window-controls button:hover {
     transform: scale(1.3);
   }
-  
+
   /* macOS tarzı renkler */
   .window-controls .minimize:hover {
     color: var(--primery);
   }
-  
+
   .window-controls .maximize:hover {
     color: var(--success);
   }
-  
+
   .window-controls .close:hover {
       color: var(--danger) !important;
   }

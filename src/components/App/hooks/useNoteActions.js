@@ -2,7 +2,6 @@ import { useCallback } from 'react';
 import { storage } from '../../../storage';
 
 export default function useNoteActions({
-  notes,
   setNotes,
   selectedNote,
   setSelectedNote,
@@ -12,7 +11,6 @@ export default function useNoteActions({
   setContent,
   noteStatus,
   noteTags,
-  categories
 }) {
   const handleAddNote = useCallback((categoryId) => {
     // Use provided categoryId; allow null (uncategorized) if none selected
@@ -64,8 +62,8 @@ export default function useNoteActions({
 }
 // Ek aksiyonlar eklendi
 
-export function extendNoteActions(base, deps) {
-  const { selectedNote, setSelectedNote, setNotes, title, content, noteTags } = deps;
+export function useExtendedNoteActions(base, deps) {
+  const { selectedNote, setSelectedNote, setNotes, title, content } = deps; // noteTags not needed here
 
   const handleSoftDelete = useCallback(() => {
     if (!selectedNote || !confirm('trush stediğinize emin misiniz?')) return;
@@ -124,12 +122,5 @@ export function extendNoteActions(base, deps) {
     }
   }, [selectedNote, title, content]);
 
-  return {
-    ...base,
-    handleSoftDelete,
-    handleRestore,
-    handlePermanentDelete,
-    handleTogglePin,
-    handleExport,
-  };
+  return { handleSoftDelete, handleRestore, handlePermanentDelete, handleTogglePin, handleExport };
 }

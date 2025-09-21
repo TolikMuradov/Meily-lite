@@ -18,6 +18,10 @@
   --pink: #ff79c6;
   --gray: #5c6370;
   --svg: invert(56%) sepia(14%) saturate(516%) hue-rotate(186deg) brightness(92%) contrast(92%);
+  --search-match-bg: rgba(255, 214, 0, 0.28);
+  --search-match-border: rgba(255, 214, 0, 0.55);
+  --search-active-bg: rgba(88,140,255,0.38);
+  --search-active-border: rgba(88,140,255,0.9);
 }
 
 [data-theme="Catppuccin"] {
@@ -40,6 +44,11 @@
   --pink: #f5c2e7;
   --gray: #6c7086;
   --svg: invert(73%) sepia(5%) saturate(1322%) hue-rotate(191deg) brightness(84%) contrast(86%)
+  ;
+  --search-match-bg: rgba(250, 206, 120, 0.32);
+  --search-match-border: rgba(250, 206, 120, 0.55);
+  --search-active-bg: rgba(137,180,250,0.40);
+  --search-active-border: rgba(137,180,250,0.85);
 }
 
 [data-theme="Gruvbox"] {
@@ -62,6 +71,10 @@
   --pink: #d3869b;
   --gray: #928374;
   --svg: invert(66%) sepia(12%) saturate(510%) hue-rotate(356deg) brightness(91%) contrast(92%);
+  --search-match-bg: rgba(250, 189, 47, 0.30);
+  --search-match-border: rgba(250, 189, 47, 0.55);
+  --search-active-bg: rgba(254,128,25,0.38);
+  --search-active-border: rgba(254,128,25,0.85);
 }
 
 [data-theme="OneDark"] {
@@ -84,4 +97,8 @@
   --pink: #ff79c6;
   --gray: #5c6370;
   --svg: invert(38%) sepia(10%) saturate(605%) hue-rotate(181deg) brightness(95%) contrast(88%);
+  --search-match-bg: rgba(229,192,123,0.30);
+  --search-match-border: rgba(229,192,123,0.55);
+  --search-active-bg: rgba(97,175,239,0.40);
+  --search-active-border: rgba(97,175,239,0.85);
 }

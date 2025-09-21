@@ -238,3 +238,74 @@ npm install
 ---
 Bu özet ve reinstall rehberi güncel eklemeleri belgeler; yeni özellikler geldikçe güncellenebilir.
 
+---
+
+## Markdown Table Editing (Interactive)
+
+Bu proje gelişmiş (Inkdrop benzeri) etkileşimli Markdown tablo düzenleme deneyimi içerir.
+
+### Klavye Davranışları
+
+- `Enter` (sadece satır sonu ve pipe içeren satırda):
+  - Tek satırlık header ise otomatik olarak alignment satırı + boş data satırı ekler ve tabloyu hizalar.
+  - Alignment satırında ise hemen altına yeni boş data satırı ekler.
+  - Herhangi bir data satırında ise altına yeni bir boş data satırı ekler.
+- `Tab` / `Shift+Tab`: Hücreler arasında yatay gezinme.
+  - Son hücrenin sonunda `Tab`: Yeni boş data satırı ekler (ilk sütuna konumlanır).
+  - Alignment satırını atlar (gezinti sırasında hizalama satırı üzerinden veri satırına geçer).
+- `Alt+Shift+R`: Tabloyu manuel yeniden formatla (zorla hizalama).
+- `Alt+Shift+Enter`: Mevcut satırın altına boş satır ekle (manuel).
+- `Alt+Shift+C`: İmlecin bulunduğu sütundan sonra yeni sütun ekle.
+
+### Otomatik Hizalama & Formatlama
+
+- Sütun genişlikleri tüm header + data satırları taranarak belirlenir.
+- Alignment satırı (`| :--- | :---: | ---: |` gibi) spacing açısından header/data satırlarıyla eşitlenir.
+- Varsayılan hizalama `left`; alignment satırında `:---:` → center, `---:` → right algılanır.
+- `autoFormatOnTab` açıksa her hücre gezinmesinde tablo yeniden hizalanır; kapalıysa yalnızca yeni satır eklenince veya explicit komutta hizalanır.
+
+### Performans Ölçümü
+
+- Her formatlama süresi ölçülür ve `perfWarnThresholdMs` (varsayılan 24ms) aşılırsa `console.warn([table.perf.*])` ile loglanır.
+- Büyük tablolar için `autoFormatOnTab` kapatılması önerilir.
+
+### Undo Davranışı
+
+- Sadece hücreler arası gezinme (Tab/Shift+Tab) işlemleri `tableMove` userEvent ile gruplanabilir (editor undo implementasyonuna göre bir arada tutulur).
+- Yeni satır eklenmesi `tableStructure` olarak ayrı undo sınırı olur.
+- Tek-dispatch Enter: Skeleton veya yeni satır ekleme + format + imleç konumlandırma tek history adımıdır.
+
+### Yapılandırma (Config)
+
+Config runtime'da `localStorage` üzerinden saklanır (`tableConfig:v1`). Kod içinde `getTableConfig()` ile okunur.
+
+| Anahtar | Varsayılan | Açıklama |
+|---------|------------|----------|
+| `debug` | `true` | Detaylı konsol logları (hareket, enter, perf). |
+| `kernelEnabled` | `false` | `@susisu/mte-kernel` kullanmayı dener (hata durumunda fallback). |
+| `autoFormatOnTab` | `true` | Tab gezinmesinde anında yeniden hizalama. |
+| `perfWarnThresholdMs` | `24` | Bu eşiği aşan format süreleri uyarı loglar. |
+
+Toggles (örnek kullanım):
+
+```js
+import { toggleDebug, toggleAutoFormat, getTableConfig } from './src/config/tableConfig';
+toggleAutoFormat();
+console.log(getTableConfig());
+```
+
+### Bilinen Sınırlamalar
+
+- GFM parser derin AST yerine heuristik satır tespiti kullanır; nested table yapıları desteklenmez.
+- Çok büyük (1000+ satır) tablolar için performans düşebilir; incremental format gelecekte eklenebilir.
+- Inline multi-line code blokları (` ``` `) içindeki pipe karakterleri tablo algılamasını etkileyebilir (üçlü backtick içinde tablo moduna girmez).
+
+### Gelecek İyileştirmeler (Olası)
+
+- Incremental (sadece değişen sütun) formatlama.
+- Sütun silme komutu.
+- Çoklu hücre seçimi ile toplu hizalama.
+- CSV import → tabloya dönüştürme kısayolu.
+
+---
+

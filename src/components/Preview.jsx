@@ -117,16 +117,16 @@ const Preview = forwardRef(({ content, onToggleTask }, ref) => {
             </div>
           ),
           // Suppress native GFM checkbox inputs; we render our own.
-          input: ({ node, ...inputProps }) => {
+          input: ({ ...inputProps }) => {
             if (inputProps.type === 'checkbox') {
               return null; // hide default checkbox
             }
             return <input {...inputProps} />;
           },
-          li: ({ node, children, ...props }) => {
-            const lineGuess = node?.position?.start?.line ? (node.position.start.line - 1) : -1;
+          li: ({ node: _node, children, ...props }) => {
+            const lineGuess = _node?.position?.start?.line ? (_node.position.start.line - 1) : -1;
             const prescanned = lineGuess >= 0 ? taskLineMap[lineGuess] : undefined;
-            const isTask = typeof node?.checked === 'boolean' || !!prescanned;
+            const isTask = typeof _node?.checked === 'boolean' || !!prescanned;
             const baseClass = props.className ? props.className + ' ' : '';
 
             const renderTask = (checked, contentChildren, meta) => {
@@ -188,9 +188,9 @@ const Preview = forwardRef(({ content, onToggleTask }, ref) => {
               });
               // Determine line index by finding preceding position info if available (node.position from mdast)
               const line = lineGuess;
-              const checked = typeof node?.checked === 'boolean' ? node.checked : !!prescanned?.checked;
+              const checked = typeof _node?.checked === 'boolean' ? _node.checked : !!prescanned?.checked;
               // If fallback (no node.checked) and first text still begins with [ ] remove it
-              if (!node.checked && prescanned) {
+              if (!_node?.checked && prescanned) {
                 // Clean leading marker from first string fragment if present
                 if (flat.length) {
                   const first = flat[0];
@@ -223,7 +223,7 @@ const Preview = forwardRef(({ content, onToggleTask }, ref) => {
                   const isChecked = /x/i.test(m[1]);
                   // Rebuild content without the leading marker token
                   let consumed = false;
-                  const rebuilt = inspectNodes.map((n, idx) => {
+                  const rebuilt = inspectNodes.map((n) => {
                     if (typeof n === 'string') {
                       if (!consumed) {
                         consumed = true;
@@ -239,7 +239,7 @@ const Preview = forwardRef(({ content, onToggleTask }, ref) => {
                       : rebuilt),
                     ...rawChildren.slice(1)
                   ];
-                  const line = node.position?.start?.line ? (node.position.start.line - 1) : -1;
+                  const line = _node?.position?.start?.line ? (_node.position.start.line - 1) : -1;
                   return renderTask(isChecked, restChildren, { line });
                 }
               }

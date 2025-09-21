@@ -33,31 +33,28 @@ export default function EditorTop({
   onLinkClick,
 }) {
   return (
-    <div className="editor-top-container" style={{ padding: '20px', fontSize: '1.2em' }}>
-  {/* 📝 Title */}
+    <div className="editor-top-container medium">
       <input
         type="text"
-        className="title-input"
+        className="title-input medium"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-  placeholder="Title"
-        style={{ fontSize: '1.5em', padding: '10px' }}
+        placeholder="Title"
+        aria-label="Note title"
       />
-
-  {/* 📂 Category, Status, Tags */}
-      <NoteMetaControls
-        categories={categories}
-        selectedCategoryId={selectedCategoryId}
-        setSelectedCategoryId={setSelectedCategoryId}
-        status={noteStatus}
-        setStatus={setNoteStatus}
-        tags={noteTags}
-        setTags={setNoteTags}
-      />
-
-      {/* 🔧 Toolbar ve Butonlar */}
-      <div className="toolbar-and-buttons" style={{ marginTop: '15px' }}>
-        <div className="toolbar" style={{ gap: '10px' }}>
+      <div className="meta-row" aria-label="Note metadata controls">
+        <NoteMetaControls
+          categories={categories}
+          selectedCategoryId={selectedCategoryId}
+          setSelectedCategoryId={setSelectedCategoryId}
+          status={noteStatus}
+          setStatus={setNoteStatus}
+          tags={noteTags}
+          setTags={setNoteTags}
+        />
+      </div>
+      <div className="toolbar-and-buttons compact-row">
+        <div className="toolbar medium" aria-label="Formatting toolbar">
           <button className='header' onClick={() => onInsertMarkdown('#')}><PiHashStraightDuotone /></button>
           <button onClick={() => onInsertMarkdown('**', '**')} title="Bold">
             <FiBold />
@@ -94,17 +91,16 @@ export default function EditorTop({
           </button>
         </div>
 
-        {/* 📌 Pin + Kaydet/Sil/Dışa Aktar */}
-        <div className="editor-buttons" style={{ marginTop: '10px' }}>
+  <div className="editor-buttons medium" aria-label="Note actions">
           {note && (
-            <button className="btn" onClick={onTogglePin} style={{ fontSize: '0.8em', padding: '8px 12px' }}>
+            <button className="btn subtle" onClick={onTogglePin}>
               <FiPaperclip style={{ marginRight: 4 }} />
               {note.is_pinned ? 'Pinned' : 'Pin to top'}
             </button>
           )}
-          <button className="btn" onClick={onSave} style={{ fontSize: '0.8em', padding: '8px 12px' }}>Save</button>
-          <button className="btn" onClick={onDelete} style={{ fontSize: '0.8em', padding: '8px 12px' }}>Trash</button>
-          <button className="btn" onClick={onExport} style={{ fontSize: '0.8em', padding: '8px 12px' }}>Export</button>
+          <button className="btn subtle" onClick={onSave}>Save</button>
+          <button className="btn subtle" onClick={onDelete}>Trash</button>
+          <button className="btn subtle" onClick={onExport}>Export</button>
         </div>
       </div>
 

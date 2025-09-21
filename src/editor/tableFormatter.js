@@ -16,15 +16,15 @@ function tokenizeLine(line) {
   let inCode = false; // inline code backticks
   for (let i = 1; i < work.length; i++) { // skip first pipe
     const ch = work[i];
-    const prev = work[i - 1];
-    if (!escaped && ch === '`') inCode = !inCode; // toggle
+    if (!escaped && ch === '`') inCode = !inCode; // toggle inline code
     if (!escaped && !inCode && ch === '|') {
       cells.push(current);
       current = '';
       continue;
     }
-    if (!escaped && ch === '\\') {
+    if (!escaped && ch === '\\') { // escape next char literally
       escaped = true;
+      current += ch; // keep the backslash so caller sees \|
       continue;
     }
     escaped = false;
@@ -56,14 +56,14 @@ function detectAlignment(parts) {
 }
 
 function buildAlignment(parts, widths, alignSpec) {
-  // Add a leading and trailing space just like header/data rows so vertical pipes align visually.
+  // Trim one padding space (right side) to avoid perceived extra width vs header.
   return '|' + parts.map((_, i) => {
     const w = Math.max(3, widths[i]);
     const d = '-'.repeat(w);
     const a = alignSpec[i];
     let seg;
     if (a === 'center') seg = ':' + d + ':'; else if (a === 'right') seg = d + ':'; else seg = ':' + d; // left
-    return ' ' + seg + ' ';
+    return ' ' + seg; // only leading space
   }).join('|') + '|';
 }
 
