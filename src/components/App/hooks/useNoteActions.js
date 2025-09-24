@@ -12,50 +12,55 @@ export default function useNoteActions({
   noteStatus,
   noteTags,
 }) {
-  const handleAddNote = useCallback((categoryId) => {
-    // Use provided categoryId; allow null (uncategorized) if none selected
-    console.log('[handleAddNote] incoming categoryId =', categoryId);
+  const handleAddNote = useCallback(async (categoryId, overrides = {}) => {
     const newNote = {
-      title: 'Untitled',
-      content: 'write something here ...',
+      title: overrides.title ?? 'Untitled',
+      content: overrides.content ?? '',
       category: categoryId || null,
       is_pinned: false,
       is_deleted: false,
       status: 'active',
       tag_ids: []
     };
-    console.log('[handleAddNote] payload.category =', newNote.category);
-
-  storage.createNote(newNote)
-      .then(note => {
-        if (note?.id) {
-          setNotes(prev => [note, ...prev]);
-          setSelectedNote(note);
-          setTitle(note.title);
-          setContent(note.content);
-        } else {
-          alert('Note could not be created.');
-        }
-      })
-  .catch(err => console.error('Note could not be created:', err));
+    try {
+      const note = await storage.createNote(newNote);
+      if (note?.id) {
+        setNotes(prev => [note, ...prev]);
+        setSelectedNote(note);
+        setTitle(note.title);
+        setContent(note.content);
+        return note;
+      } else {
+        alert('Note could not be created.');
+        return null;
+      }
+    } catch (err) {
+      console.error('Note could not be created:', err);
+      return null;
+    }
   }, [setNotes, setSelectedNote, setTitle, setContent]);
 
-  const handleUpdateNote = useCallback(() => {
-    if (!selectedNote?.id) return alert('Güncellemek için not seçmelisin!');
+  const handleUpdateNote = useCallback(async () => {
+    if (!selectedNote?.id) { alert('Güncellemek için not seçmelisin!'); return null; }
     const updatedNote = {
       ...selectedNote,
-  title: title || 'Untitled',
+      title: title || 'Untitled',
       content: content || 'İçerik boş olamaz',
       status: noteStatus,
       tag_ids: noteTags.map(t => t.id)
     };
-
-  storage.updateNote(selectedNote.id, updatedNote)
-      .then(saved => {
+    try {
+      const saved = await storage.updateNote(selectedNote.id, updatedNote);
+      if (saved?.id) {
         setNotes(prev => prev.map(n => n.id === saved.id ? saved : n));
         setSelectedNote(saved);
-      })
-  .catch(err => console.error('Note could not be updated:', err));
+        return saved;
+      }
+      return null;
+    } catch (err) {
+      console.error('Note could not be updated:', err);
+      return null;
+    }
   }, [selectedNote, title, content, noteStatus, noteTags, setNotes, setSelectedNote]);
 
   return { handleAddNote, handleUpdateNote };

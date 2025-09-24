@@ -18,6 +18,9 @@ export default function EditorTop({
   title,
   setTitle,
   onInsertMarkdown,
+  onBold,
+  onItalic,
+  onStrikethrough,
   onSave,
   onDelete,
   onExport,
@@ -56,12 +59,13 @@ export default function EditorTop({
       <div className="toolbar-and-buttons compact-row">
         <div className="toolbar medium" aria-label="Formatting toolbar">
           <button className='header' onClick={() => onInsertMarkdown('#')}><PiHashStraightDuotone /></button>
-          <button onClick={() => onInsertMarkdown('**', '**')} title="Bold">
+          <button onClick={onBold} title="Bold">
             <FiBold />
           </button>
-          <button onClick={() => onInsertMarkdown('_', '_')} title="Italic">
+          <button onClick={onItalic} title="Italic">
             <FiItalic />
           </button>
+          <button onClick={onStrikethrough} title="Strikethrough">~~</button>
           <button onClick={onLinkClick} title="Link Ekle">
             <FiLink />
           </button>

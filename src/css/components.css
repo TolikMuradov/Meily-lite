@@ -57,9 +57,13 @@
   border-radius: 4px;
 }
 
-.note-item:hover,
+.note-item:hover {
+  background-color: var(--bg-hover);
+}
 .note-item.selected {
   background-color: var(--bg-hover);
+  border-left: 3px solid var(--primary);
+  padding-left: 9px; /* Adjust padding to account for border */
 }
 
 .note-header-row {

@@ -4,6 +4,7 @@ import {
   FiSearch, FiEdit, FiPaperclip,
   FiPlay, FiPause, FiCheckCircle, FiXCircle
 } from 'react-icons/fi';
+import { BiTask } from "react-icons/bi";
 import { BsSortDown } from "react-icons/bs";
 import { hexToRgba } from './utils';
 
@@ -77,7 +78,7 @@ export default function NotesList({
 
         <div className="title">{filterTitle}</div>
         <div className="right-icons">
-          <button onClick={() => { console.log('Create Note button clicked'); onAddNote(selectedCategoryId || null); }} className="icon-btn">
+          <button id="create-note-btn" data-action="create-note" onClick={() => { console.log('Create Note button clicked'); onAddNote(selectedCategoryId || null); }} className="icon-btn">
             <FiEdit size={16} />
           </button>
         </div>

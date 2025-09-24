@@ -8,45 +8,66 @@
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="settings-container">
-    <button class="close-button" onclick="closeSettings()">&times;</button>
-    <h2 class="settings-title">Settings</h2>
+  <div class="settings-dashboard">
+    <aside class="settings-nav">
+      <div class="nav-header">
+        <h2>Settings</h2>
+        <button class="close-button" onclick="closeSettings()" title="Close">&times;</button>
+      </div>
+      <nav>
+        <button class="nav-item active" data-tab="customizing">Customizing</button>
+        <button class="nav-item" data-tab="shortcuts">Shortcuts</button>
+        <button class="nav-item" data-tab="future">Future</button>
+      </nav>
+      <div class="nav-footer">v1 Dashboard (early)</div>
+    </aside>
+    <main class="settings-content">
+      <!-- Customizing Panel -->
+      <section class="tab-panel active" id="tab-customizing" aria-labelledby="customizing">
+        <h3 class="panel-title">Themes</h3>
+        <div class="theme-cards" id="themeCards">
+          <!-- Cards will be injected by JS -->
+        </div>
+        <div class="toggle-cards">
+          <div class="toggle-card">
+            <label><input type="checkbox" id="transparentToggle"> <span>Arka plan şeffaf</span></label>
+            <p class="desc">Pencereyi yarı saydam yapar (destekleyen platformlarda).</p>
+          </div>
+          <div class="toggle-card">
+            <label><input type="checkbox" id="searchAnimToggle"> <span>Arama highlight animasyonu</span></label>
+            <p class="desc">Arama sonuçlarında yumuşak vurgu animasyonu.</p>
+          </div>
+        </div>
+      </section>
 
-    <div class="theme-section">
-      <h3>Tema Seç</h3>
-      <button class="theme-button" onclick="setTheme('TokyoNight')">TokyoNight</button>
-      <button class="theme-button" onclick="setTheme('Catppuccin')">Catppuccin</button>
-      <button class="theme-button" onclick="setTheme('Gruvbox')">Gruvbox</button>
-      <button class="theme-button" onclick="setTheme('OneDark')">OneDark</button>
-    </div>
+      <!-- Shortcuts Panel -->
+      <section class="tab-panel" id="tab-shortcuts" aria-labelledby="shortcuts">
+        <h3 class="panel-title">Shortcuts</h3>
+        <p class="muted">Düzenlenebilir kısayollar yakında. Şimdilik örnek liste:</p>
+        <table class="shortcuts-table">
+          <thead><tr><th>Action</th><th>Shortcut</th><th>Status</th></tr></thead>
+          <tbody id="shortcutRows"></tbody>
+        </table>
+        <div class="shortcut-actions">
+          <button class="placeholder-button" disabled>Yeni Kısayol (Soon)</button>
+        </div>
+      </section>
 
-    <div class="transparent-section">
-      <label class="transparent-label">
-        <input type="checkbox" id="transparentToggle">
-        Arka planı şeffaf yap
-      </label>
-    </div>
-
-    <div class="transparent-section">
-      <label class="transparent-label">
-        <input type="checkbox" id="searchAnimToggle">
-        Arama highlight animasyonu
-      </label>
-    </div>
-
-    <div class="category-section">
-      <h3>Varsayılan Kategori Seç</h3>
-      <select id="defaultCategorySelect"></select>
-      <button class="apply-button" onclick="updateDefaultCategory()">Uygula</button>
-      <p id="categoryResultMsg" class="result-message"></p>
-    </div>
-
-    <div class="future-section">
-      <h3>Gelecekteki Özellikler</h3>
-      <p>Burada yeni özellikler için yer tutucular olacak.</p>
-      <button class="placeholder-button">Dil Seçimi (Placeholder)</button>
-      <button class="placeholder-button">Tema Önizleme (Placeholder)</button>
-    </div>
+      <!-- Future Panel -->
+      <section class="tab-panel" id="tab-future" aria-labelledby="future">
+        <h3 class="panel-title">Future / Coming Soon</h3>
+        <ul class="future-list">
+          <li>Font family & size customization</li>
+          <li>Advanced theme preview</li>
+          <li>Custom shortcut editor</li>
+          <li>Import / Export settings</li>
+        </ul>
+        <div class="placeholder-zone">
+          <button class="placeholder-button">Dil Seçimi (Placeholder)</button>
+          <button class="placeholder-button">Tema Önizleme (Placeholder)</button>
+        </div>
+      </section>
+    </main>
   </div>
 
   <script>

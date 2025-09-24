@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
+let ResvgLib = null;
 
 let mainWindow;
 let settingsWindow;
@@ -35,7 +36,7 @@ function createMainWindow() {
 
 function createSettingsWindow() {
   settingsWindow = new BrowserWindow({
-    width: 510,
+    width: 900,
     height: 560,
     frame: false, // 🔥 pencere çerçevesini kapatır
     transparent: true, // 🔥 arka planı şeffaf yapar
@@ -227,4 +228,46 @@ ipcMain.on('close-settings-window', () => {
 
 app.whenReady().then(() => {
   createMainWindow();
+});
+
+// IPC: SVG -> PNG export (main-process, resvg)
+ipcMain.handle('export-svg-png', async (event, { svg, name, askUser }) => {
+  try {
+    if (!svg) return { ok:false, error:'no-svg' };
+    if (!ResvgLib) {
+      try { ResvgLib = require('@resvg/resvg-js'); } catch(err) { return { ok:false, error:'resvg-load', detail:String(err) }; }
+    }
+    const { Resvg } = ResvgLib;
+    const r = new Resvg(svg, { fitTo: { mode: 'original' } });
+    const pngData = r.render().asPng();
+    const base = (name||'diagram').replace(/[^a-z0-9-_]/gi,'_').slice(0,40) || 'diagram';
+    let filePath;
+    if (askUser) {
+      const { canceled, filePath: chosen } = await dialog.showSaveDialog({
+        title: 'Save Diagram as PNG',
+        defaultPath: `${base}.png`,
+        filters: [{ name: 'PNG Image', extensions: ['png'] }]
+      });
+      if (canceled || !chosen) return { ok:false, error:'canceled' };
+      filePath = chosen;
+    } else {
+      const picturesDir = app.getPath('pictures');
+      filePath = path.join(picturesDir, base + '-' + Date.now() + '.png');
+    }
+    fs.writeFileSync(filePath, pngData);
+    return { ok:true, path:filePath };
+  } catch(err) {
+    console.error('export-svg-png error:', err);
+    return { ok:false, error:'exception', detail:String(err) };
+  }
+});
+
+ipcMain.handle('reveal-file', async (event, filePath) => {
+  try {
+    if (filePath && fs.existsSync(filePath)) {
+      shell.showItemInFolder(filePath);
+      return true;
+    }
+    return false;
+  } catch(err) { console.error('reveal-file error', err); return false; }
 });

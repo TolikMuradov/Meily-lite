@@ -8,7 +8,7 @@ import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 import rehypeKatex from 'rehype-katex';
 import rehypeSanitize from 'rehype-sanitize';
-import Mermaid from 'react-mermaid2';
+import MermaidRenderer from './MermaidRenderer';
 import 'katex/dist/katex.min.css';
 import 'highlight.js/styles/github-dark.css';
 import '../css/MarkdownEditor.css';
@@ -18,6 +18,7 @@ import "../css/Editor/pre.css"
 import "../css/Editor/tables.css"
 import "../css/Editor/blockquote.css"
 import "../css/Editor/tasks.css"
+import "../css/Editor/mermaid.css"
 
 const Preview = forwardRef(({ content, onToggleTask }, ref) => {
   const hostRef = useRef(null);
@@ -88,19 +89,33 @@ const Preview = forwardRef(({ content, onToggleTask }, ref) => {
 
   return (
     <div
-      className="markdown-preview"
       ref={hostRef}
+      className="markdown-preview"
       style={{
-        fontFamily: 'Arial, sans-serif',
-        lineHeight: '1.6',
-        color: 'var(--text-color)',
-        backgroundColor: 'var(--bg-color)',
-        transition: 'color 0.3s, background-color 0.3s',
-        padding: '20px',
-        margin: '20px auto',
-        maxWidth: '800px',
+        // Outer container: fills available flex area and scrolls; ref points here for sync
+        height: '100%',
+        width: '100%',
+        overflowY: 'auto',
+        boxSizing: 'border-box',
+        // Remove outer margin so height constraint actually applies
+        margin: 0,
+        padding: 0,
+        background: 'transparent'
       }}
     >
+      <div
+        style={{
+          fontFamily: 'Arial, sans-serif',
+          lineHeight: '1.6',
+          color: 'var(--text-color)',
+          backgroundColor: 'var(--bg-color)',
+          transition: 'color 0.3s, background-color 0.3s',
+          padding: '20px',
+          margin: '0 auto',
+          maxWidth: '800px',
+          boxSizing: 'border-box'
+        }}
+      >
       <ReactMarkdown
         children={content}
   remarkPlugins={[[remarkGfm, { taskList: true }], remarkMath]}
@@ -111,11 +126,14 @@ const Preview = forwardRef(({ content, onToggleTask }, ref) => {
           rehypeHighlight,
         ]}
         components={{
-          table: ({ children, ...props }) => (
-            <div className="table-wrapper">
-              <table {...props}>{children}</table>
-            </div>
-          ),
+          table: ({ node, children, ...props }) => {
+            const line = node?.position?.start?.line ? node.position.start.line - 1 : undefined;
+            return (
+              <div className="table-wrapper" data-line={line}>
+                <table {...props}>{children}</table>
+              </div>
+            );
+          },
           // Suppress native GFM checkbox inputs; we render our own.
           input: ({ ...inputProps }) => {
             if (inputProps.type === 'checkbox') {
@@ -134,6 +152,7 @@ const Preview = forwardRef(({ content, onToggleTask }, ref) => {
               return (
                 <li
                   {...props}
+                  data-line={meta.line}
                   data-task
                   className={baseClass + 'task-list-item'}
                   style={{ listStyle: 'none', margin: '4px 0', display: 'flex', alignItems: 'flex-start', gap: '8px' }}
@@ -245,11 +264,12 @@ const Preview = forwardRef(({ content, onToggleTask }, ref) => {
               }
             }
 
-            return <li {...props}>{children}</li>;
+            return <li {...props} data-line={lineGuess}>{children}</li>;
           },
-          code({ inline, className, children, ...props }) {
+          code({ node, inline, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
             const lang = match?.[1];
+            const codeString = String(children).trim();
 
             // Always render inline code as an inline element
             if (inline) {
@@ -258,23 +278,14 @@ const Preview = forwardRef(({ content, onToggleTask }, ref) => {
 
             // Mermaid fenced block (non-inline only)
             if (lang === 'mermaid') {
-              try {
-                return (
-                  <div style={{ background: 'transparent', padding: '12px', borderRadius: '6px' }}>
-                    <Mermaid chart={String(children).trim()} />
-                  </div>
-                );
-              } catch (error) {
-                console.error('Mermaid render error:', error);
-                return <div className="mermaid-error">Mermaid render error</div>;
-              }
+              const line = node?.position?.start?.line ? node.position.start.line - 1 : undefined;
+              return <div data-line={line}><MermaidRenderer code={codeString} /></div>;
             }
 
-            const codeString = String(children).trim();
-
             // Non-inline, regular code block
+            const line = node?.position?.start?.line ? node.position.start.line - 1 : undefined;
             return (
-              <div style={{ position: 'relative', margin: '1em 0', border: '1px solid var(--border-color)', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }}>
+              <div data-line={line} style={{ position: 'relative', margin: '1em 0', border: '1px solid var(--border-color)', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }}>
                 <div className="btnbg" style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 2 }}>
                   <button
                     className="copy-button"
@@ -290,7 +301,7 @@ const Preview = forwardRef(({ content, onToggleTask }, ref) => {
               </div>
             );
           },
-          p: ({ children }) => {
+          p: ({ node, children }) => {
             const blockTags = new Set(['div', 'pre', 'table', 'blockquote', 'ul', 'ol', 'hr', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
 
             const hasBlockDesc = (node) => {
@@ -332,15 +343,19 @@ const Preview = forwardRef(({ content, onToggleTask }, ref) => {
             flushInline();
 
             // If everything was inline, return a single <p>. Otherwise, return a fragment of mixed nodes
-            if (out.length === 1 && out[0].type === 'p') return out[0];
-            return <>{out}</>;
+            if (out.length === 1 && out[0].type === 'p') {
+              const line = node?.position?.start?.line ? node.position.start.line - 1 : undefined;
+              return React.cloneElement(out[0], { 'data-line': line });
+            }
+            const line = node?.position?.start?.line ? node.position.start.line - 1 : undefined;
+            return <>{out.map((el, idx) => React.isValidElement(el) && el.type === 'p' ? React.cloneElement(el, { 'data-line': line, key: idx }) : el)}</>;
           },
-          h1: ({ children }) => <h1 style={{ fontSize: '2em', margin: '1em 0', fontWeight: 'bold' }}>{children}</h1>,
-          h2: ({ children }) => <h2 style={{ fontSize: '1.75em', margin: '1em 0', fontWeight: 'bold' }}>{children}</h2>,
-          h3: ({ children }) => <h3 style={{ fontSize: '1.5em', margin: '1em 0', fontWeight: 'bold' }}>{children}</h3>,
-          h4: ({ children }) => <h4 style={{ fontSize: '1.25em', margin: '1em 0', fontWeight: 'bold' }}>{children}</h4>,
-          h5: ({ children }) => <h5 style={{ fontSize: '1em', margin: '1em 0', fontWeight: 'bold' }}>{children}</h5>,
-          h6: ({ children }) => <h6 style={{ fontSize: '0.875em', margin: '1em 0', fontWeight: 'bold' }}>{children}</h6>,
+          h1: ({ node, children }) => <h1 data-line={node?.position?.start?.line ? node.position.start.line - 1 : undefined} style={{ fontSize: '2em', margin: '1em 0', fontWeight: 'bold' }}>{children}</h1>,
+          h2: ({ node, children }) => <h2 data-line={node?.position?.start?.line ? node.position.start.line - 1 : undefined} style={{ fontSize: '1.75em', margin: '1em 0', fontWeight: 'bold' }}>{children}</h2>,
+          h3: ({ node, children }) => <h3 data-line={node?.position?.start?.line ? node.position.start.line - 1 : undefined} style={{ fontSize: '1.5em', margin: '1em 0', fontWeight: 'bold' }}>{children}</h3>,
+          h4: ({ node, children }) => <h4 data-line={node?.position?.start?.line ? node.position.start.line - 1 : undefined} style={{ fontSize: '1.25em', margin: '1em 0', fontWeight: 'bold' }}>{children}</h4>,
+          h5: ({ node, children }) => <h5 data-line={node?.position?.start?.line ? node.position.start.line - 1 : undefined} style={{ fontSize: '1em', margin: '1em 0', fontWeight: 'bold' }}>{children}</h5>,
+          h6: ({ node, children }) => <h6 data-line={node?.position?.start?.line ? node.position.start.line - 1 : undefined} style={{ fontSize: '0.875em', margin: '1em 0', fontWeight: 'bold' }}>{children}</h6>,
           img: ({ src, alt, ...props }) => {
             const original = String(src || '');
             const resolved = resolveAssetSrc(original);
@@ -387,7 +402,7 @@ const Preview = forwardRef(({ content, onToggleTask }, ref) => {
               {children}
             </a>
           ),
-          blockquote: ({ children }) => {
+          blockquote: ({ node, children }) => {
             const mapAlias = (k) => {
               const key = (k || '').toLowerCase();
               if (key === 'succes') return 'success';
@@ -466,13 +481,14 @@ const Preview = forwardRef(({ content, onToggleTask }, ref) => {
               important: <FaBolt />,
               caution: <FaExclamationCircle />
             };
+            const line = node?.position?.start?.line ? node.position.start.line - 1 : undefined;
             if (!variant) {
-              return <blockquote className={cls}>{transformed}</blockquote>;
+              return <blockquote data-line={line} className={cls}>{transformed}</blockquote>;
             }
             const label = variantLabelMap[variant] || variant;
             const icon = variantIconMap[variant] || <FaInfoCircle />;
             return (
-              <blockquote className={cls} data-variant={variant}>
+              <blockquote className={cls} data-variant={variant} data-line={line}>
                 <div className="callout-header">
                   <span className="callout-icon">{icon}</span>
                   <span className="callout-label">{label}</span>
@@ -483,6 +499,7 @@ const Preview = forwardRef(({ content, onToggleTask }, ref) => {
           },
         }}
       />
+      </div>
     </div>
   );
 });

@@ -2,8 +2,8 @@
 import { useEffect, useState, useRef } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { markdown } from '@codemirror/lang-markdown';
-import { keymap, highlightActiveLine, EditorView, Decoration } from '@codemirror/view';
-import { StateEffect, StateField } from '@codemirror/state';
+import { keymap, highlightActiveLine, EditorView, Decoration, ViewPlugin } from '@codemirror/view';
+import { StateEffect, StateField, RangeSetBuilder } from '@codemirror/state';
 import { languageCompartment, keymapCompartment } from '../editor/compartments';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { indentOnInput, foldGutter, syntaxTree } from '@codemirror/language';
@@ -11,6 +11,7 @@ import { Prec } from '@codemirror/state';
 import '../css/MarkdownEditor.css';
 import { formatTable, moveCell, tableKernelExtension, handleEnter } from '../editor/tableKernelAdapter';
 import { buildKeySpecs } from '../commands/registry';
+// Custom formatting events dispatched from toolbar or keymaps will be listened here
 import CommandPalette from './CommandPalette';
 import ShortcutsModal from './ShortcutsModal';
 import SearchOverlay from './editor/SearchOverlay';
@@ -50,9 +51,51 @@ const SLASH_COMMANDS = [
 
 // (debounce kaldırıldı - kullanılmıyor)
 
+// Inline formatting highlight plugin (bold / italic / strikethrough)
+const inlineFormatHighlight = ViewPlugin.fromClass(class {
+  constructor(view) {
+    this.decorations = this.build(view);
+  }
+  update(update) {
+    if (update.docChanged || update.viewportChanged) {
+      this.decorations = this.build(update.view);
+    }
+  }
+  build(view) {
+    const builder = new RangeSetBuilder();
+    const tree = syntaxTree(view.state);
+    const visible = view.visibleRanges;
+    for (const { from, to } of visible) {
+      tree.iterate({
+        from, to,
+        enter: (node) => {
+          if (node.name === 'StrongEmphasis' || node.name === 'Emphasis' || node.name === 'Strikethrough') {
+            const start = node.from;
+            const end = node.to;
+            if (end <= start) return;
+            const text = view.state.doc.sliceString(start, end);
+            let i = 0; let j = text.length;
+            while (i < j && (text[i] === '*' || text[i] === '_' || text[i] === '~')) i++;
+            while (j > i && (text[j - 1] === '*' || text[j - 1] === '_' || text[j - 1] === '~')) j--;
+            if (j <= i) return;
+            const cls = node.name === 'StrongEmphasis'
+              ? 'cm-md-boldInner'
+              : node.name === 'Emphasis'
+                ? 'cm-md-italicInner'
+                : 'cm-md-strikeInner';
+            builder.add(start + i, start + j, Decoration.mark({ class: cls }));
+          }
+        }
+      });
+    }
+    return builder.finish();
+  }
+}, { decorations: v => v.decorations });
+
 export default function MarkdownEditor({ content, setContent, editorRef, onAutosave }) {
   const [themeVars, setThemeVars] = useState({});
   const containerRef = useRef(null);
+  const lastCursorLineRef = useRef(-1);
   // preview toggle kaldırıldı (kullanılmıyor)
   const [lineCount, setLineCount] = useState(1);
   const toastTimeouts = useRef([]);
@@ -81,7 +124,30 @@ export default function MarkdownEditor({ content, setContent, editorRef, onAutos
     indentOnInput(),
     history(),
     searchHighlightField,
+    inlineFormatHighlight,
     keymap.of([{ key: 'Mod-f', preventDefault: true, run: () => { toggleSearch(); return true; } }]),
+    keymap.of([
+      { key: 'Mod-b', preventDefault: true, run: () => { window.dispatchEvent(new CustomEvent('editor-do-bold')); return true; } },
+      { key: 'Mod-i', preventDefault: true, run: () => { window.dispatchEvent(new CustomEvent('editor-do-italic')); return true; } },
+      { key: 'Alt-Shift-S', preventDefault: true, run: () => { window.dispatchEvent(new CustomEvent('editor-do-strike')); return true; } }
+    ]),
+    keymap.of([
+      { key: 'Mod-n', preventDefault: true, run: () => { window.dispatchEvent(new CustomEvent('editor-new-note')); return true; } },
+      { key: 'Mod-s', preventDefault: true, run: () => { window.dispatchEvent(new CustomEvent('editor-save-note')); return true; } },
+      { key: 'Mod-Shift-e', preventDefault: true, run: () => { window.dispatchEvent(new CustomEvent('editor-export-note')); return true; } },
+      { key: 'Mod-k', preventDefault: true, run: () => { window.dispatchEvent(new CustomEvent('editor-insert-link')); return true; } },
+      { key: 'Mod-e', preventDefault: true, run: () => { window.dispatchEvent(new CustomEvent('editor-inline-code')); return true; } },
+      { key: 'Mod-Shift-l', preventDefault: true, run: () => { window.dispatchEvent(new CustomEvent('editor-bullet-list')); return true; } },
+      { key: 'Mod-Shift-o', preventDefault: true, run: () => { window.dispatchEvent(new CustomEvent('editor-ordered-list')); return true; } },
+      { key: 'Mod-Shift-t', preventDefault: true, run: () => { window.dispatchEvent(new CustomEvent('editor-task-item')); return true; } },
+      { key: 'Mod->', preventDefault: true, run: () => { window.dispatchEvent(new CustomEvent('editor-blockquote')); return true; } },
+      { key: 'Mod-Alt-1', preventDefault: true, run: () => { window.dispatchEvent(new CustomEvent('editor-heading', { detail: 1 })); return true; } },
+      { key: 'Mod-Alt-2', preventDefault: true, run: () => { window.dispatchEvent(new CustomEvent('editor-heading', { detail: 2 })); return true; } },
+      { key: 'Mod-Alt-3', preventDefault: true, run: () => { window.dispatchEvent(new CustomEvent('editor-heading', { detail: 3 })); return true; } },
+      { key: 'Mod-Alt-4', preventDefault: true, run: () => { window.dispatchEvent(new CustomEvent('editor-heading', { detail: 4 })); return true; } },
+      { key: 'Mod-Alt-5', preventDefault: true, run: () => { window.dispatchEvent(new CustomEvent('editor-heading', { detail: 5 })); return true; } },
+      { key: 'Mod-Alt-6', preventDefault: true, run: () => { window.dispatchEvent(new CustomEvent('editor-heading', { detail: 6 })); return true; } }
+    ]),
     EditorView.domEventHandlers({
       dragover: (e) => { e.preventDefault(); e.stopPropagation(); if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'; return true; },
       drop: (e, view) => {
@@ -196,16 +262,42 @@ export default function MarkdownEditor({ content, setContent, editorRef, onAutos
           height="100%"
           extensions={editorExtensions}
           theme="dark"
-          onCreateEditor={(view) => { editorRef.current = view; }}
-          onChange={(value) => {
+          basicSetup={false}
+          onCreateEditor={(view) => {
+            // bazı sürümlerde doğru prop 'onCreateEditor'; yine de güvence için
+            editorRef.current = view;
+            setTimeout(() => { try { view.focus(); } catch(_) {} }, 0);
+          }}
+          onUpdate={(viewUpdate) => {
+            if (!editorRef.current && viewUpdate.view) editorRef.current = viewUpdate.view;
+            if (viewUpdate.selectionSet && editorRef.current) {
+              try {
+                const head = editorRef.current.state.selection.main.head;
+                const ln = editorRef.current.state.doc.lineAt(head).number - 1;
+                if (ln !== lastCursorLineRef.current) {
+                  lastCursorLineRef.current = ln;
+                  window.dispatchEvent(new CustomEvent('editor-cursor-line', { detail: ln }));
+                }
+              } catch (_) {}
+            }
+          }}
+          onChange={(value, viewUpdate) => {
             setContent(value);
             scheduleAutosave(value);
-
-            const view = editorRef.current;
-            if (!view) return;
-            setLineCount(view.state.doc.lines);
-
-            handleTextChanged(value, view);
+            const view = editorRef.current || viewUpdate.view;
+            if (view) {
+              setLineCount(view.state.doc.lines);
+              handleTextChanged(value, view);
+              // Sadece farklı satıra geçildiğinde tetikle (yeni satır eklenmiş olabilir)
+              try {
+                const head = view.state.selection.main.head;
+                const ln = view.state.doc.lineAt(head).number - 1;
+                if (ln !== lastCursorLineRef.current) {
+                  lastCursorLineRef.current = ln;
+                  window.dispatchEvent(new CustomEvent('editor-cursor-line', { detail: ln }));
+                }
+              } catch (_) {}
+            }
           }}
           style={{
             backgroundColor: 'transparent',

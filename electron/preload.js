@@ -8,6 +8,8 @@ contextBridge.exposeInMainWorld('api', {
   exportNote: (note) => ipcRenderer.invoke('export-note', note),
   copyImage: (filePath) => ipcRenderer.invoke('copy-image', filePath),
   copyImageBuffer: (name, arrayBuffer) => ipcRenderer.invoke('copy-image-buffer', { name, data: arrayBuffer }),
+  exportSvgPng: (svg, name, askUser=false) => ipcRenderer.invoke('export-svg-png', { svg, name, askUser }),
+  revealFile: (filePath) => ipcRenderer.invoke('reveal-file', filePath),
   minimize: () => ipcRenderer.send('window:minimize'),
   maximize: () => ipcRenderer.send('window:maximize'),
   toggleMaximize: () => ipcRenderer.send('window:maximize'),

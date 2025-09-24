@@ -38,11 +38,10 @@
 
 .cm-scroller {
   width: 100% !important;
-  height: 100vh !important;
-  overflow-y: scroll !important;
+  height: 100% !important; /* 100vh kullanıcı viewportundan bağımsız — container yüksekliği ile uyumlu */
+  overflow-y: auto !important;
   overflow-x: hidden !important;
-  background: transparent !important; /* test için görünür yap */
-
+  background: transparent !important;
 }
 
 .cm-scroller::-webkit-scrollbar,
@@ -178,7 +177,6 @@
   right: 16px;
   bottom: 16px;
   display: flex;
-  flex-direction: column;
   gap: 8px;
   padding: 8px;
   background: var(--bg-panel, rgba(0,0,0,0.5));
@@ -218,6 +216,11 @@
   box-shadow: 0 0 0 1px var(--search-active-border), 0 0 4px -1px var(--search-active-border);
   animation: searchPulse 2.5s ease-in-out infinite;
 }
+
+/* Inline markdown formatting highlights (editor only) */
+.cm-md-boldInner { color: var(--red); font-weight: 600; }
+.cm-md-italicInner { color: var(--primary); font-style: italic; }
+.cm-md-strikeInner { text-decoration: line-through !important; opacity: 0.85; }
 
 .no-search-anim .cm-search-match-active { animation: none !important; box-shadow: 0 0 0 1px var(--search-active-border); }
 

@@ -1,0 +1,58 @@
+/* Mermaid complete styling pack */
+
+/* Container & layout */
+/* Minimal Mermaid overrides (reset to near-default) */
+.mermaid-diagram-container { margin: 1.25em 0; }
+.mermaid-svg-wrapper svg { width: 100%; height: auto; background: transparent !important; }
+/* Allow diagram content to adapt to theme text color */
+.mermaid-svg-wrapper .label, .mermaid-svg-wrapper text { fill: var(--text,#ddd); }
+/* Error / info placeholders (kept generic) */
+.mermaid-info { font: 12px/1.4 system-ui,sans-serif; opacity:.7; }
+.mermaid-error { color: var(--danger,#f55); }
+.mermaid-svg-wrapper .timeline .section0 rect { fill: var(--mermaid-cluster-bg) !important; }
+
+/* Requirement Diagram (req) */
+.mermaid-svg-wrapper .reqBox rect { fill: rgba(1, 1, 1, 0.1) !important; stroke: var(--border) !important; }
+.mermaid-svg-wrapper .reqBox text { fill: var(--text,#e0e0e0) !important; }
+
+/* Sankey / Other links */
+.mermaid-svg-wrapper .sankey-node rect { fill: var(--mermaid-node-bg) !important; stroke: var(--mermaid-node-border) !important; }
+.mermaid-svg-wrapper .sankey-link { stroke: var(--mermaid-edge) !important; opacity: .5; transition: opacity .2s; }
+.mermaid-svg-wrapper .sankey-link:hover { opacity: .85; }
+
+/* Hover highlights */
+.mermaid-svg-wrapper .section0 rect.task:hover,
+.mermaid-svg-wrapper .actor rect:hover,
+.mermaid-svg-wrapper .classGroup rect:hover,
+.mermaid-svg-wrapper .stateGroup rect:hover,
+.mermaid-svg-wrapper .er .box rect:hover,
+.mermaid-svg-wrapper .mindmap-node rect:hover,
+.mermaid-svg-wrapper .reqBox rect:hover { stroke: var(--primary,#569cd6) !important; }
+
+/* (All themes are dark) Removed light overrides. */
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+	.mermaid-svg-wrapper svg, 
+	.mermaid-btn, 
+	.mermaid-svg-wrapper .slice path { transition: none !important; }
+}
+
+/* Print */
+@media print {
+	.mermaid-actions { display: none !important; }
+	.mermaid-svg-wrapper svg { box-shadow: none !important; background: transparent !important; outline: none !important; }
+}
+
+/* Small added options (zoom + export + code toggle) */
+.mermaid-diagram-container { position:relative; }
+.mermaid-toolbar { position:absolute; top:4px; right:4px; display:flex; gap:4px; flex-wrap:nowrap; padding:4px 5px; background:rgba(20,20,20,.55); backdrop-filter:blur(6px); border:1px solid var(--border,#444); border-radius:8px; box-shadow:0 4px 16px -2px rgba(0,0,0,.55); opacity:0; transform:translateY(-4px); transition:opacity .16s ease, transform .16s ease; z-index:10; }
+.mermaid-diagram-container:hover .mermaid-toolbar,
+.mermaid-diagram-container:focus-within .mermaid-toolbar { opacity:1; transform:translateY(0); }
+.mermaid-toolbar button { background:rgba(40,40,40,.65); color:var(--text,#ddd); border:1px solid var(--border,#555); padding:2px 6px; border-radius:5px; font:11px system-ui,sans-serif; cursor:pointer; line-height:1.2; display:inline-flex; align-items:center; gap:2px; user-select:none; }
+.mermaid-toolbar button:hover { background:rgba(60,60,60,.7); }
+.mermaid-toolbar button:active { background:rgba(30,30,30,.9); }
+.mermaid-outer-scroll { overflow:auto; max-width:100%; padding-top:2px; }
+.mermaid-source { background:#111; color:#ccc; padding:6px 8px; border:1px solid #333; border-radius:4px; font:11px/1.4 ui-monospace,monospace; max-height:240px; overflow:auto; }
+.mermaid-diagram-container.is-zoomed .mermaid-svg-wrapper { cursor:move; }
+

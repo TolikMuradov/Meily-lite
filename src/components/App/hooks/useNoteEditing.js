@@ -8,6 +8,7 @@ export default function useNoteEditing({ selectedNote, setNotes, setSelectedNote
   const [content, setContent] = useState('');
   const [noteStatus, setNoteStatus] = useState('active');
   const [noteTags, setNoteTags] = useState([]);
+  const skipAutosaveRef = useRef(false);
 
   // Orijinal not referansı değiştikçe draft'ı senkronize et
   useEffect(() => {
@@ -26,13 +27,13 @@ export default function useNoteEditing({ selectedNote, setNotes, setSelectedNote
 
   const autosaveDebounced = useRef(
     debounce((draft) => {
+      if (skipAutosaveRef.current) return;
       if (!draft?.id) return;
       storage.updateNote(draft.id, draft)
         .then(saved => {
           if (!saved?.id) return;
           const merged = {
             ...saved,
-            // localProvider set etmişse saved.tags vardır, yoksa draft.tags fallback
             tags: Array.isArray(saved.tags) ? saved.tags : (draft.tags || [])
           };
           setNotes(prev => prev.map(n => n.id === merged.id ? merged : n));
@@ -42,9 +43,14 @@ export default function useNoteEditing({ selectedNote, setNotes, setSelectedNote
     }, 1000)
   );
 
+  const pauseAutosave = () => { skipAutosaveRef.current = true; };
+  const resumeAutosave = () => { skipAutosaveRef.current = false; };
+  const flushAutosave = () => { try { autosaveDebounced.current.flush?.(); } catch {} };
+
   // Draft güncelleme helper
   const queueAutosave = useCallback((partial) => {
     if (!selectedNote?.id) return;
+    if (skipAutosaveRef.current) return;
     const draft = {
       ...selectedNote,
       title,
@@ -107,5 +113,6 @@ export default function useNoteEditing({ selectedNote, setNotes, setSelectedNote
     setTitle: updateTitle,
     setContent: updateContent,
     updateCategory,
+    autosaveControls: { pauseAutosave, resumeAutosave, flushAutosave, skipAutosaveRef }
   };
 }
